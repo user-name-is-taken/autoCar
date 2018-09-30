@@ -266,7 +266,7 @@ local.properties
 
 # Package Files #
 *.jar
-!gnu.io.rxtx_2.1.7.4_v20071016.jar
+!*gnu.io.rxtx_2.1.7.4_v20071016.jar
 
 *.war
 *.nar
