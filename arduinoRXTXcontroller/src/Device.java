@@ -8,6 +8,7 @@ import java.io.OutputStream;
 /**
  * Classes that inherit this can write to and read from the serial port.
  * They MUST override the void receive(String) method that's called when they get input.
+ * Devices must be serial devices (not parallel)
  * @author pi
  *
  */
@@ -15,6 +16,8 @@ public abstract class Device {
 	String name;
 	SerialWriter writer;
 	SerialReader reader;
+	SerialPort serialPort;
+	
 	
 	public Device(String name){
 		setName(name);
@@ -90,19 +93,19 @@ public abstract class Device {
             
             if ( commPort instanceof SerialPort )
             {
-                SerialPort serialPort = (SerialPort) commPort;
-                serialPort.setSerialPortParams( speed, bits, stop_bits, parity);
+                this.serialPort = (SerialPort) commPort;
+                this.serialPort.setSerialPortParams( speed, bits, stop_bits, parity);
                 
-                InputStream in = serialPort.getInputStream();
-                OutputStream out = serialPort.getOutputStream();
+                InputStream in = this.serialPort.getInputStream();
+                OutputStream out = this.serialPort.getOutputStream();
                 
                 this.writer = new SerialWriter(out);
                 (new Thread(this.writer)).start();
                 
                 this.reader = new SerialReader(in, this);
-                serialPort.addEventListener(this.reader);
+                this.serialPort.addEventListener(this.reader);
                 
-                serialPort.notifyOnDataAvailable(true);
+                this.serialPort.notifyOnDataAvailable(true);
 
             }
             else
@@ -112,4 +115,7 @@ public abstract class Device {
         }     
     }
 
+   public void killConnection(){
+	   this.serialPort.removeEventListener();
+   }
 }

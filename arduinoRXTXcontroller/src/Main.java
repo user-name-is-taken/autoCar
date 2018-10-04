@@ -12,6 +12,7 @@ public class Main {
 		Motor rightMotor = new Motor(port);
 		rightMotor.setDirection(true);
 		rightMotor.setSpeed(1);
+		rightMotor.killConnection();
 
 	}
 
