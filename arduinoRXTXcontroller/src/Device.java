@@ -117,5 +117,6 @@ public abstract class Device {
 
    public void killConnection(){
 	   this.serialPort.removeEventListener();
+	   this.serialPort.close();
    }
 }
