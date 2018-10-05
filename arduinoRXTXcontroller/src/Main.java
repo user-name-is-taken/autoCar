@@ -3,6 +3,7 @@ import javax.swing.JOptionPane;
 public class Main {
 
 	/**
+	 * This is the main function, it runs the program.
 	 * @param args
 	 */
 	public static void main(String[] args) {
