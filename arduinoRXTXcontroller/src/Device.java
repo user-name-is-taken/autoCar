@@ -11,7 +11,23 @@ import java.io.OutputStream;
  * Devices must be serial devices (not parallel)
  * 
  * Code for the connection and reading and writing over RXTX is taken from the 
- * <a href="http://rxtx.qbang.org/wiki/index.php/Examples">examples on the RXTX wiki</a>. 
+ * <a href="http://rxtx.qbang.org/wiki/index.php/Examples">examples on the RXTX wiki</a>.
+ * 
+ * More useful links:
+ * 
+ * - <a href="http://users.frii.com/jarvi/rxtx/doc/index.html>gnu.io docs</a>
+ * - <a href="https://docs.oracle.com/cd/E17802_01/products/products/javacomm/reference/api/index.html">
+ * javax.comm docs</a>
+ * - <a href-"http://rxtx.qbang.org/wiki/index.php/Download">
+ * download link for the RXTXcomm.jar I'm using</a>
+ * - <a href="http://rxtx.qbang.org/wiki/index.php/Using_RXTX_In_Eclipse">
+ * Partially complete installation in eclipse instructions</a>
+ * 
+ * To fully install on eclipse in linux, run `sudo apt-get install librxtx-java`
+ * then, make /usr/share/java:/usr/lib/jni the native library location of the RXTXcomm.jar
+ * when you add it to the build path
+ * 
+ * 
  * 
  * @author pi
  *
