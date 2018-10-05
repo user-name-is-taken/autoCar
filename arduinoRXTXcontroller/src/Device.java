@@ -24,7 +24,7 @@ import java.io.OutputStream;
  * Partially complete installation in eclipse instructions</a>
  * 
  * To fully install on eclipse in linux, run `sudo apt-get install librxtx-java`
- * then, make /usr/share/java:/usr/lib/jni the native library location of the RXTXcomm.jar
+ * then, make `/usr/share/java:/usr/lib/jni` the native library location of the RXTXcomm.jar
  * when you add it to the build path
  * 
  * 
