@@ -9,6 +9,10 @@ import java.io.OutputStream;
  * Classes that inherit this can write to and read from the serial port.
  * They MUST override the void receive(String) method that's called when they get input.
  * Devices must be serial devices (not parallel)
+ * 
+ * Code for the connection and reading and writing over RXTX is taken from the 
+ * <a href="http://rxtx.qbang.org/wiki/index.php/Examples">examples on the RXTX wiki</a>. 
+ * 
  * @author pi
  *
  */
