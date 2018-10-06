@@ -32,5 +32,6 @@ public interface MotorInterface{
 	 */
 	int getSpeed(int Motor);
 	
+	// add a stop all motors?
 	
 }
