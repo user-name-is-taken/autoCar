@@ -49,7 +49,9 @@ void loop() {
     delay(10);
   }
   
-  Serial.print("talk");
+  Serial.print("tal
+  
+  k");
 
   myMotor->run(BACKWARD);
   for (i=0; i<255; i++) {
