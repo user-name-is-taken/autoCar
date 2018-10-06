@@ -32,7 +32,7 @@ import java.io.OutputStream;
  * @author pi
  *
  */
-public abstract class Device {
+public abstract class Device{
 	String name;
 	SerialWriter writer;
 	SerialReader reader;
@@ -52,13 +52,13 @@ public abstract class Device {
 	 * This message is called when a device sends a message to the pi
 	 * @param message - the message received.
 	 */
-	abstract void receive(String message);
+	abstract protected void receive(String message);
 	
 	/**
 	 * This sends data to the device
 	 * @param message the data to be sent
 	 */
-	public void send(String message){
+	protected void send(String message){
 		this.writer.write(message);
 	}
 	
@@ -66,7 +66,7 @@ public abstract class Device {
 	 * gets the name of the device
 	 * @return name the name of the port the device is connected to. (ex: /dev/ttyUSB1)
 	 */
-	String getName(){
+	public String getName(){
 		return this.name;
 	}
 	
@@ -84,7 +84,7 @@ public abstract class Device {
 	 * 
 	 * @throws Exception because that's what the example told me to do
 	 */
-	void connect () throws Exception{
+	protected void connect () throws Exception{
 		   connect(57600,SerialPort.DATABITS_8,SerialPort.STOPBITS_1,SerialPort.PARITY_NONE);
 	   }
 	
@@ -100,7 +100,7 @@ public abstract class Device {
 	 * @param parity defines how error checking is done
 	 * @throws Exception see connect()
 	 */
-   void connect (int speed, int bits, int stop_bits, int parity) throws Exception
+   protected void connect (int speed, int bits, int stop_bits, int parity) throws Exception
     {
         CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(this.getName());
         if ( portIdentifier.isCurrentlyOwned() )
