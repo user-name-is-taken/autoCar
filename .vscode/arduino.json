@@ -1,0 +1,5 @@
+{
+    "port": "COM3",
+    "board": "Intel:arc32:arduino_101",
+    "sketch": "motor_sheild\\motor_sheild.ino"
+}
