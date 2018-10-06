@@ -12,7 +12,7 @@ public class Main {
 		String port = JOptionPane.showInputDialog("enter port name");
 		MotorShield sheild = new MotorShield(port);
 		sheild.setDirection(true);
-		sheild.setSpeed(1);
+		sheild.setSpeed(1,1);
 		sheild.killConnection();
 
 	}
