@@ -1,7 +1,11 @@
 import java.io.IOException;
 import java.io.OutputStream;
 
-
+/**
+ * This class is straight from the docs on RXTX
+ * @author pi
+ *
+ */
 public class SerialWriter implements Runnable {
 
 	

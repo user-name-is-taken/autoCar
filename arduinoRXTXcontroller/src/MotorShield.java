@@ -7,20 +7,22 @@ import javax.swing.JOptionPane;
  *
  * MOTORS ARE 1-4, ARRAYS ARE 0-3 ADJUST
  */
-public class MotorShield extends Device implements MotorInterface {
+public class MotorShield extends ArduinoAPI {
 	
-	boolean[] direction = {true, true, true, true};
-	int[] speed = {0,0,0,0};
-
-	public MotorShield(String name) {
-		super(name);
+	public MotorShield(String name, Device dev) {
+		super(name, dev);
 		// TODO Auto-generated constructor stub
 	}
 
+	boolean[] direction = {true, true, true, true};
+	int[] speed = {0,0,0,0};
+
+
 	@Override
-	protected void receive(String message) {
+	protected boolean receive(String message) {
 		// TODO Auto-generated method stub
 		JOptionPane.showMessageDialog(null, message);
+		return false;
 	}
 	
 	/**
@@ -30,7 +32,7 @@ public class MotorShield extends Device implements MotorInterface {
 	public void setDirection(boolean direction, int motor){
 		//validate
 		this.direction[motor-1] = direction;
-		this.send(motor + (direction?"1":"0"));//add the motor to this
+		this.dev.send(motor + (direction?"1":"0"));//add the motor to this
 	}
 	
 	
@@ -50,7 +52,7 @@ public class MotorShield extends Device implements MotorInterface {
 	public void setSpeed(int speed,int motor){
 		//validate
 		this.speed[motor-1] = speed;
-		this.send(""+speed);
+		this.dev.send(""+speed);
 	}
 	
 	/**

@@ -10,10 +10,11 @@ public class Main {
 		// TODO Auto-generated method stub
 		DeviceSetup.listPorts();
 		String port = JOptionPane.showInputDialog("enter port name");
-		MotorShield sheild = new MotorShield(port);
-		sheild.setDirection(true);
+		Device dev = new Device(port);
+		MotorShield sheild = new MotorShield("Motor 1", dev);
+		sheild.setDirection(true, 1);
 		sheild.setSpeed(1,1);
-		sheild.killConnection();
+		dev.killConnection();
 
 	}
 
