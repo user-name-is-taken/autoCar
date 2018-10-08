@@ -9,6 +9,7 @@ For use with the Adafruit Motor Shield v2
 
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
+#include "MotorShieldv2Lib.h"
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
@@ -49,9 +50,7 @@ void loop() {
     delay(10);
   }
   
-  Serial.print("tal
-  
-  k");
+  Serial.print("talk");
 
   myMotor->run(BACKWARD);
   for (i=0; i<255; i++) {
