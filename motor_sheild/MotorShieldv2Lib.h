@@ -15,14 +15,27 @@
 #include <Adafruit_MotorShield.h>
 #include "MotorShieldv2Lib.h"
 #include <Wire.h>
+#include<unordered_map>
+
+using namespace std;
 
 class MotorShield{
   Adafruit_MotorShield AFMS;// need to make a .begin for this?
-  Stream *ser;
-  //https://stackoverflow.com/questions/4296276/c-cannot-declare-field-to-be-of-abstract-type
+  private:
+    Stream *ser;
+
+    
+    static unordered_map<String, MotorShield> shields;// holds all the shields
+    //https://www.geeksforgeeks.org/unordered_map-at-cpp/ - unordered map use
+    //http://www.cplusplus.com/reference/unordered_map/unordered_map/ - unordered map docs
+  // see this for why ser must be a pointer https://stackoverflow.com/questions/4296276/c-cannot-declare-field-to-be-of-abstract-type
   public:
-    MotorShield(String name, Stream *ptrSer);
-    boolean checkMessage(String message);  
+    MotorShield(String address, Stream *ptrSer);
+    static boolean checkMessage(String message);
+    static const String SHIELD_PATTERN_START;
+    static const String SPEED_PATTERN;
+    static const String DIR_PATTERN;
+    
 };
 
 
