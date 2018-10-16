@@ -25,21 +25,21 @@ class MotorShield{
   Adafruit_MotorShield AFMS;// need to make a .begin for this?
   private:
     Stream *ser;
-
+      // see this for why ser must be a pointer https://stackoverflow.com/questions/4296276/c-cannot-declare-field-to-be-of-abstract-type
     
-    //static unordered_map<string, MotorShield> shields;// holds all the shields
-    //https://www.geeksforgeeks.org/unordered_map-at-cpp/ - unordered map use
-    //http://www.cplusplus.com/reference/unordered_map/unordered_map/ - unordered map docs
-  // see this for why ser must be a pointer https://stackoverflow.com/questions/4296276/c-cannot-declare-field-to-be-of-abstract-type
+    static const MotorShield *shields [32];
+    // Initialized as all null in the cpp file
+    //https://stackoverflow.com/questions/2615071/c-how-do-you-set-an-array-of-pointers-to-null-in-an-initialiser-list-like-way
+      // the above link described this initialization
+      // shields holds pointer to the shield objects.
+      // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
+      // In this array, [0] == address 0x60, [31] == address 0x7F
+    
   public:
     MotorShield(String address, Stream *ptrSer);
     static boolean checkMessage(String message);
     static const char SHIELD_PATTERN_START [];
     static const char SPEED_PATTERN [];
-    static const char DIR_PATTERN [];
-    
-    
+    static const char DIR_PATTERN [];   
 };
-
-
 #endif

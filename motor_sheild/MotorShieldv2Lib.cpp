@@ -23,6 +23,13 @@ const char MotorShield::SHIELD_PATTERN_START [] = "^MSv2_[0-9]{2,2}_";
 const char MotorShield::SPEED_PATTERN [] = "speed_[1-4]_[0-9]{0,5}$";
 const char MotorShield::DIR_PATTERN [] = "direction_[1-4]_[0-2]$";
 
+const MotorShield *MotorShield::shields [32] = {};// should be all null
+//https://stackoverflow.com/questions/2615071/c-how-do-you-set-an-array-of-pointers-to-null-in-an-initialiser-list-like-way
+  // the above link described this initialization
+  // shields holds the shields.
+  // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
+  // In this array, [0] == address 0x60, [31] == address 0x7F
+
 //https://stackoverflow.com/questions/1563897/c-static-constant-string-class-member - defining these static variables
 MotorShield::MotorShield(String address, Stream *prtSer){
   // the MotorShield constructor
@@ -52,12 +59,14 @@ boolean MotorShield::checkMessage(String message){
   char buf [message.length()];
   message.toCharArray(buf, message.length());
   ms.Target(buf);
-  char forShield = ms.Match(MotorShield::SHIELD_PATTERN_START);//check if the message is for the shield
+  char isForShield = ms.Match(MotorShield::SHIELD_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
-  if(forShield > 0){
+  if(isForShield > 0){
+    //parse out which shield, set it as a variable
     if(ms.Match(MotorShield::SPEED_PATTERN) > 0){
-      //set speed
+      //parse out params
+      //set speed on the shield
       return true;
     }else if(ms.Match(MotorShield::DIR_PATTERN) > 0){
       //set direction
