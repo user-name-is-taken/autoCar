@@ -34,9 +34,9 @@ class MotorShield{
   public:
     MotorShield(String address, Stream *ptrSer);
     static boolean checkMessage(String message);
-    static const String SHIELD_PATTERN_START;
-    static const String SPEED_PATTERN;
-    static const String DIR_PATTERN;
+    static const char SHIELD_PATTERN_START [];
+    static const char SPEED_PATTERN [];
+    static const char DIR_PATTERN [];
     
     
 };
