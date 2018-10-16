@@ -8,33 +8,20 @@
 #include "MotorShieldv2Lib.h"
 #include <SoftwareSerial.h>
 
-//SoftwareSerial MotorShield::ser;
 
-const char MotorShield::SHIELD_PATTERN_START [] = "^MSv2_[0-9]{2,2}_";
-const char MotorShield::SPEED_PATTERN [] = "speed_[1-4]_[0-9]{0,5}$";
-const char MotorShield::DIR_PATTERN [] = "direction_[1-4]_[0-2]$";
+static const char SHIELD_PATTERN_START [] = "^MSv2_[67][0-9A-Fa-f]_";
+static const char SPEED_PATTERN [] = "speed_[1-4]_[0-9]{0,5}$";
+static const char DIR_PATTERN [] = "direction_[1-4]_[0-2]$";
 
-const MotorShield *MotorShield::shields [32] = {};// should be all null
+static const Adafruit_MotorShield *shields [32] = {};
+// Initialized as all null
 //https://stackoverflow.com/questions/2615071/c-how-do-you-set-an-array-of-pointers-to-null-in-an-initialiser-list-like-way
   // the above link described this initialization
-  // shields holds the shields.
+  // shields holds pointer to the shield objects.
   // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
   // In this array, [0] == address 0x60, [31] == address 0x7F
+  // note, static in this context means the array's pointer can't change, the array values can
 
-/*
- * This creates a MotorShield class.
- * Motor shield
-https://stackoverflow.com/questions/1563897/c-static-constant-string-class-member - defining these static variables
-*/
-MotorShield::MotorShield(String address, Stream *prtSer){
-  // the MotorShield constructor
-  ser = prtSer;
-  // Create the motor shield object with the default I2C address
-  AFMS = Adafruit_MotorShield(); 
-  // Or, create it with a different I2C address (say for stacking)
-  // Adafruit_MotorShield AFMS = Adafruit_MotorShield(0x61);    
-  //AFMS.begin here?
-}
 
 /*
  * motor shield signals are of the format "MSv2_shield number_then the command_parameters"
@@ -49,21 +36,21 @@ MotorShield::MotorShield(String address, Stream *prtSer){
  *   - return false
  
 */
-boolean MotorShield::checkMessage(String message){
+boolean checkMotorShieldMessage(String message, Stream *ser){
   MatchState ms;
   char buf [message.length()];
   message.toCharArray(buf, message.length());
   ms.Target(buf);
-  char isForShield = ms.Match(MotorShield::SHIELD_PATTERN_START);//check if the message is for the shield
+  char isForShield = ms.Match(SHIELD_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
   if(isForShield > 0){
     //parse out which shield, set it as a variable
-    if(ms.Match(MotorShield::SPEED_PATTERN) > 0){
+    if(ms.Match(SPEED_PATTERN) > 0){
       //parse out params
       //set speed on the shield
       return true;
-    }else if(ms.Match(MotorShield::DIR_PATTERN) > 0){
+    }else if(ms.Match(DIR_PATTERN) > 0){
       //set direction
       return true;
     //ADD OTHER STUFF (SET SERVOS...)
@@ -75,4 +62,18 @@ boolean MotorShield::checkMessage(String message){
   }else{
     return false;
   }
+}
+
+/*
+ * Converts the message from the Serial port to its corresponding motor
+ * 
+
+ */
+Adafruit_MotorShield * getMotorShield(String message){
+// * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
+// the above might help with the conversion
+//https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
+//Note: 0x70 is the broadcast
+   String shieldAddress = message.substring(5,7);
+   
 }
