@@ -12,10 +12,12 @@
 // the serial library?
 // hardware vs software serial https://forum.arduino.cc/index.php?topic=407633.0
 // maybe you don't need serial?
+
 #include <Adafruit_MotorShield.h>
 #include "MotorShieldv2Lib.h"
-#include <Wire.h>
-#include<unordered_map>
+
+//pass
+
 
 using namespace std;
 
@@ -25,7 +27,7 @@ class MotorShield{
     Stream *ser;
 
     
-    static unordered_map<String, MotorShield> shields;// holds all the shields
+    //static unordered_map<string, MotorShield> shields;// holds all the shields
     //https://www.geeksforgeeks.org/unordered_map-at-cpp/ - unordered map use
     //http://www.cplusplus.com/reference/unordered_map/unordered_map/ - unordered map docs
   // see this for why ser must be a pointer https://stackoverflow.com/questions/4296276/c-cannot-declare-field-to-be-of-abstract-type
@@ -35,6 +37,7 @@ class MotorShield{
     static const String SHIELD_PATTERN_START;
     static const String SPEED_PATTERN;
     static const String DIR_PATTERN;
+    
     
 };
 
