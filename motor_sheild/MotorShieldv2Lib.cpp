@@ -7,15 +7,6 @@
 #include <Adafruit_MotorShield.h>
 #include "MotorShieldv2Lib.h"
 #include <SoftwareSerial.h>
-//#include<unordered_map>
-
-
-//https://stackoverflow.com/questions/15733163/c-error-unordered-map-does-not-name-a-type
-//
-
-
-
-
 
 //SoftwareSerial MotorShield::ser;
 
@@ -30,7 +21,11 @@ const MotorShield *MotorShield::shields [32] = {};// should be all null
   // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
   // In this array, [0] == address 0x60, [31] == address 0x7F
 
-//https://stackoverflow.com/questions/1563897/c-static-constant-string-class-member - defining these static variables
+/*
+ * This creates a MotorShield class.
+ * Motor shield
+https://stackoverflow.com/questions/1563897/c-static-constant-string-class-member - defining these static variables
+*/
 MotorShield::MotorShield(String address, Stream *prtSer){
   // the MotorShield constructor
   ser = prtSer;

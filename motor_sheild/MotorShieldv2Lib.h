@@ -21,6 +21,12 @@
 
 using namespace std;
 
+/*
+ * The only real reason for this class is encapsulation. 
+ * Everything in this class is static.
+ * Consider making this not a class any more and just having the checkMessage function.
+ * The argument against this is you need the Stream, but you could pass it to checkMessage
+ */ 
 class MotorShield{
   Adafruit_MotorShield AFMS;// need to make a .begin for this?
   private:
