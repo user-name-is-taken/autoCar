@@ -23,6 +23,6 @@ using namespace std;
  *   - the message was received from the stream
  *   - The stream will send a message back if it has to (error code...)
  */
-boolean checkMotorShieldMessage(String message, Stream *ser);
+boolean checkMotorShieldMessage(String message, String *toWrite);
 
 #endif

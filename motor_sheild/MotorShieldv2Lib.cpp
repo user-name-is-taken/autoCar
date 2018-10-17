@@ -34,9 +34,11 @@ static const Adafruit_MotorShield *shields [32] = {};
  *   - return true
  * else: 
  *   - return false
+ *   
+ *   Remember, you NEED to de-reference toWrite with this: https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
  
 */
-boolean checkMotorShieldMessage(String message, Stream *ser){
+boolean checkMotorShieldMessage(String message, String *toWrite){
   MatchState ms;
   char buf [message.length()];
   message.toCharArray(buf, message.length());
@@ -69,11 +71,17 @@ boolean checkMotorShieldMessage(String message, Stream *ser){
  * 
 
  */
-Adafruit_MotorShield * getMotorShield(String message){
+Adafruit_MotorShield getMotorShield(String message){
 // * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
 // the above might help with the conversion
 //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
 //Note: 0x70 is the broadcast
-   String shieldAddress = message.substring(5,7);
-   
+   String shieldAddress = message.substring(5,7);//make sure this is the right length
+   char carr [2];
+   shieldAddress.toCharArray(carr, 2);
+   uint8_t addr = strtol(carr, NULL, 16);
+   //check if it exists in shields:
+      //if not, create it
+      //else return it.
+   return Adafruit_MotorShield(addr); 
 }
