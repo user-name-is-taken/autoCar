@@ -40,6 +40,8 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
    shieldAddress.toCharArray(carr, 2);
    uint8_t addr = strtol(carr, NULL, 16);
    if(addr<96 || addr > 127){
+     Serial.print(addr);
+     Serial.print(shieldAddress +"\n");//not sure if this will work
      return false;
    }
    if(!shields[addr - 96]){//checks for null pointer
@@ -118,7 +120,7 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
     Adafruit_MotorShield as = Adafruit_MotorShield();//can't be named asm?
     if(!getMotorShield(message, &as)){
        //set toWrite to an error message saying this isn't a valid number
-       *toWrite = String("MotorShield: That isn't a valid shield address.");
+       *toWrite = String("MotorShield: That isn't a valid shield address." + message);
        return true;
     }
     
