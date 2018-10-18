@@ -21,7 +21,8 @@ static Adafruit_MotorShield *shields [32] = {};
   // shields holds pointer to the shield objects.
   // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
   // In this array, [0] == address 0x60, [31] == address 0x7F
-  // note, static in this context means the array's pointer can't change, the array values can
+  // note, static in this context means the array's pointer can't c
+  hange, the array values can
 
 
 /*
