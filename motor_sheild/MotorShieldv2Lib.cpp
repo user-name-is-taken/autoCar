@@ -9,9 +9,10 @@
 
 
 
-static const char SHIELD_PATTERN_START [] = "^MSv2_[67][0-9A-Fa-f]_";
-static const char SPEED_PATTERN [] = "speed_[1-4]_[0-9]{0,5}$";
-static const char DIR_PATTERN [] = "direction_[1-4]_[0-2]$";
+static const char SHIELD_PATTERN_START [] = "^MSv2_[67][0-9A-Fa-f]_";//len == 8
+static const char SPEED_PATTERN [] = "^MSv2_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$";
+//make sure you send hex bytes!
+static const char DIR_PATTERN [] = "^MSv2_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$";
 
 static Adafruit_MotorShield *shields [32] = {};
 // Initialized as all null
@@ -51,6 +52,43 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
    return true;
 };
 
+/*
+ * gets the motor, then sets the speed
+ */
+boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
+   String motorID = message.substring(15,16);//make sure this is the right length
+   char carr [1];
+   motorID.toCharArray(carr, 1);
+   uint8_t motorAddr = strtol(carr, NULL, 16);
+   
+   String speedIn = message.substring(16,18);//make sure this is the right length
+   char speedCarr [2];
+   speedIn.toCharArray(speedCarr, 2);
+   uint8_t intSpeed = strtol(speedCarr, NULL, 16);
+
+   shield.getMotor(motorAddr)->setSpeed(intSpeed);
+   return true;
+}
+
+/*
+ * gets the motor, then sets the direction
+ * 
+ * see here: https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/library-reference#void-run-uint8-t-9-7
+ */
+boolean setMotorDir(String message, Adafruit_MotorShield shield){
+   String motorID = message.substring(19,20);//make sure this is the right length
+   char carr [1];
+   motorID.toCharArray(carr, 1);
+   uint8_t motorAddr = strtol(carr, NULL, 16);
+   
+   String dirIn = message.substring(21,23);//make sure this is the right length
+   char dirCarr [2];
+   dirIn.toCharArray(dirCarr, 2);
+   uint8_t intDir = strtol(dirCarr, NULL, 16);
+
+   shield.getMotor(motorAddr)->run(intDir);
+   return true;
+}
 
 /*
  * motor shield signals are of the format "MSv2_shield number_then the command_parameters"
@@ -87,9 +125,11 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
     if(ms.Match(SPEED_PATTERN) > 0){
       //parse out params
       //set speed on the shield
+      setMotorSpeed(message, as);
       return true;
     }else if(ms.Match(DIR_PATTERN) > 0){
       //set direction
+      setMotorDir(message, as);
       return true;
     //ADD OTHER STUFF (SET SERVOS...)
       // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem

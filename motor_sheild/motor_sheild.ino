@@ -15,10 +15,7 @@ String toWrite;
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
   Serial.println("Adafruit Motorshield v2 - DC Motor test!");
-
   toWrite = "";
-  
-
 }
 
 void loop() {
@@ -28,5 +25,4 @@ void loop() {
      //make sure this changes 
      Serial.print(toWrite);//passing the pointer
    }
-
 }
