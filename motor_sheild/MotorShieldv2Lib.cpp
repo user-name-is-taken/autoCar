@@ -14,7 +14,7 @@ static const char SPEED_PATTERN [] = "^MSv2_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA
 //make sure you send hex bytes!
 static const char DIR_PATTERN [] = "^MSv2_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$";
 
-static Adafruit_MotorShield *shields [32] = {};
+static Adafruit_MotorShield *shields [32];
 // Initialized as all null
 //https://stackoverflow.com/questions/2615071/c-how-do-you-set-an-array-of-pointers-to-null-in-an-initialiser-list-like-way
   // the above link described this initialization
@@ -22,7 +22,7 @@ static Adafruit_MotorShield *shields [32] = {};
   // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
   // In this array, [0] == address 0x60, [31] == address 0x7F
   // note, static in this context means the array's pointer can't c
-  hange, the array values can
+//  hange, the array values can
 
 
 /*
@@ -37,12 +37,11 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
 
 //pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
    String shieldAddress = message.substring(5,7);//make sure this is the right length
-   char carr [2];
-   shieldAddress.toCharArray(carr, 2);
+   char carr [3];
+   shieldAddress.toCharArray(carr, 3);
    uint8_t addr = strtol(carr, NULL, 16);
-   if(addr<96 || addr > 127){
-     Serial.print(addr);
-     Serial.print(shieldAddress +"\n");//not sure if this will work
+   //MSv2_60_speed_1_10
+   if(addr < 96 || addr > 127){
      return false;
    }
    if(!shields[addr - 96]){//checks for null pointer
@@ -57,19 +56,24 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
 
 /*
  * gets the motor, then sets the speed
+ * 
+ * pattern: ^MSv2_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$
+ *   - example: MSv2_60_speed_1_10
  */
 boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
+   Serial.println("before speed set");
    String motorID = message.substring(15,16);//make sure this is the right length
-   char carr [1];
-   motorID.toCharArray(carr, 1);
+   char carr [2];
+   motorID.toCharArray(carr, 2);
    uint8_t motorAddr = strtol(carr, NULL, 16);
    
    String speedIn = message.substring(16,18);//make sure this is the right length
-   char speedCarr [2];
-   speedIn.toCharArray(speedCarr, 2);
+   char speedCarr [3];
+   speedIn.toCharArray(speedCarr, 3);
    uint8_t intSpeed = strtol(speedCarr, NULL, 16);
-
+   
    shield.getMotor(motorAddr)->setSpeed(intSpeed);
+   Serial.println("speed set");
    return true;
 }
 
@@ -77,19 +81,23 @@ boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
  * gets the motor, then sets the direction
  * 
  * see here: https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/library-reference#void-run-uint8-t-9-7
+ * 
+ * DIR_PATTERN: ^MSv2_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$
+ *   - example: MSv2_60_direction_1_1
  */
 boolean setMotorDir(String message, Adafruit_MotorShield shield){
    String motorID = message.substring(19,20);//make sure this is the right length
-   char carr [1];
-   motorID.toCharArray(carr, 1);
+   char carr [2];
+   motorID.toCharArray(carr, 2);
    uint8_t motorAddr = strtol(carr, NULL, 16);
    
    String dirIn = message.substring(21,23);//make sure this is the right length
-   char dirCarr [2];
-   dirIn.toCharArray(dirCarr, 2);
+   char dirCarr [3];
+   dirIn.toCharArray(dirCarr, 3);
    uint8_t intDir = strtol(dirCarr, NULL, 16);
 
    shield.getMotor(motorAddr)->run(intDir);
+   Serial.println("direction set");
    return true;
 }
 
@@ -128,6 +136,7 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
     if(ms.Match(SPEED_PATTERN) > 0){
       //parse out params
       //set speed on the shield
+      Serial.println("before calling setMotorSpeed");
       setMotorSpeed(message, as);
       return true;
     }else if(ms.Match(DIR_PATTERN) > 0){
@@ -141,6 +150,7 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
       return false;
     }
   }else{
+    //*toWrite = String("MotorShield: Not for shield.");
     return false;
   }
 }
