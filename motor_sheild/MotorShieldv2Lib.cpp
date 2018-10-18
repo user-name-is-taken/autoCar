@@ -41,7 +41,7 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
    shieldAddress.toCharArray(carr, 3);
    uint8_t addr = strtol(carr, NULL, 16);
    //MSv2_60_speed_1_10
-   if(addr < 96 || addr > 127){
+   if(addr<96 || addr > 127){
      return false;
    }
    if(!shields[addr - 96]){//checks for null pointer
