@@ -2,18 +2,18 @@
 //from here: https://github.com/nickgammon/Regexp installed in computer's Arduino library, so you'll have to do this
 
 // https://www.youtube.com/watch?v=fE3Dw0slhIc
-#include <Wire.h> 
+//#include <Wire.h> 
 // the serial library?
 #include <Adafruit_MotorShield.h>
 #include "MotorShieldv2Lib.h"
-#include <SoftwareSerial.h>
+
 
 
 static const char SHIELD_PATTERN_START [] = "^MSv2_[67][0-9A-Fa-f]_";
 static const char SPEED_PATTERN [] = "speed_[1-4]_[0-9]{0,5}$";
 static const char DIR_PATTERN [] = "direction_[1-4]_[0-2]$";
 
-static const Adafruit_MotorShield *shields [32] = {};
+static Adafruit_MotorShield *shields [32] = {};
 // Initialized as all null
 //https://stackoverflow.com/questions/2615071/c-how-do-you-set-an-array-of-pointers-to-null-in-an-initialiser-list-like-way
   // the above link described this initialization
@@ -21,6 +21,35 @@ static const Adafruit_MotorShield *shields [32] = {};
   // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
   // In this array, [0] == address 0x60, [31] == address 0x7F
   // note, static in this context means the array's pointer can't change, the array values can
+
+
+/*
+ * Converts the message from the Serial port to its corresponding motor
+ * 
+ */
+boolean getMotorShield(String message, Adafruit_MotorShield *shield){
+// * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
+// the above might help with the conversion
+//https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
+//Note: 0x70 is the broadcast
+
+//pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
+   String shieldAddress = message.substring(5,7);//make sure this is the right length
+   char carr [2];
+   shieldAddress.toCharArray(carr, 2);
+   uint8_t addr = strtol(carr, NULL, 16);
+   if(addr<96 || addr > 127){
+     return false;
+   }
+   if(!shields[addr - 96]){//checks for null pointer
+      //Adafruit_MotorShield *AMS = malloc(sizeof(Adafruit_MotorShield));
+      //AMS->add
+      Adafruit_MotorShield AMS = Adafruit_MotorShield(addr);
+      shields[addr - 96] = &AMS;
+   }
+   *shield = *shields[addr - 96]; 
+   return true;
+};
 
 
 /*
@@ -48,6 +77,13 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
   if(isForShield > 0){
     //parse out which shield, set it as a variable
+    Adafruit_MotorShield as = Adafruit_MotorShield();//can't be named asm?
+    if(!getMotorShield(message, &as)){
+       //set toWrite to an error message saying this isn't a valid number
+       *toWrite = String("MotorShield: That isn't a valid shield address.");
+       return true;
+    }
+    
     if(ms.Match(SPEED_PATTERN) > 0){
       //parse out params
       //set speed on the shield
@@ -58,30 +94,10 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
     //ADD OTHER STUFF (SET SERVOS...)
       // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
     }else{
-      //probably throw an error, because nothing else will match this
+      *toWrite = String("MotorShield: No matching command found.");
       return false;
     }
   }else{
     return false;
   }
-}
-
-/*
- * Converts the message from the Serial port to its corresponding motor
- * 
-
- */
-Adafruit_MotorShield getMotorShield(String message){
-// * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
-// the above might help with the conversion
-//https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
-//Note: 0x70 is the broadcast
-   String shieldAddress = message.substring(5,7);//make sure this is the right length
-   char carr [2];
-   shieldAddress.toCharArray(carr, 2);
-   uint8_t addr = strtol(carr, NULL, 16);
-   //check if it exists in shields:
-      //if not, create it
-      //else return it.
-   return Adafruit_MotorShield(addr); 
 }

@@ -7,8 +7,7 @@
   #include "WProgram.h"
 #endif
  
-#include <Wire.h> 
-#include <SoftwareSerial.h>
+//#include <Wire.h> 
 // the serial library?
 // hardware vs software serial https://forum.arduino.cc/index.php?topic=407633.0
 // maybe you don't need serial?
