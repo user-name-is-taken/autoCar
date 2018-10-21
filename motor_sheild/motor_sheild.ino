@@ -9,7 +9,7 @@ For use with the Adafruit Motor Shield v2
 
 #include <Wire.h>
 #include "MotorShieldv2Lib.h"
-//#include <Regexp.h>
+// consider including #include <Regexp.h> here because it might be used in multiple libraries.
 #include <Adafruit_MotorShield.h>
 
 String toWrite;

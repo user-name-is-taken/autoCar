@@ -13,8 +13,6 @@
 // maybe you don't need serial?
 
 #include <Adafruit_MotorShield.h>
-#include "MotorShieldv2Lib.h"
-#include <Regexp.h>
 
 using namespace std;
 

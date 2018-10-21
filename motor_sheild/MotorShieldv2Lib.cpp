@@ -1,12 +1,12 @@
 #include <Regexp.h>
+
 //from here: https://github.com/nickgammon/Regexp installed in computer's Arduino library, so you'll have to do this
 
 // https://www.youtube.com/watch?v=fE3Dw0slhIc
-//#include <Wire.h> 
+#include <Wire.h> 
 // the serial library?
 #include <Adafruit_MotorShield.h>
 #include "MotorShieldv2Lib.h"
-
 
 
 static const char SHIELD_PATTERN_START [] = "^MSv2_[67][0-9A-Fa-f]_";//len == 8
@@ -118,8 +118,8 @@ boolean setMotorDir(String message, Adafruit_MotorShield shield){
 */
 boolean checkMotorShieldMessage(String message, String *toWrite){
   MatchState ms;
-  char buf [message.length()];
-  message.toCharArray(buf, message.length());
+  char buf [message.length() + 1];
+  message.toCharArray(buf, message.length() + 1);
   ms.Target(buf);
   char isForShield = ms.Match(SHIELD_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
@@ -142,6 +142,7 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
     }else if(ms.Match(DIR_PATTERN) > 0){
       //set direction
       setMotorDir(message, as);
+      *toWrite = String("MotorShield: Direction set.");
       return true;
     //ADD OTHER STUFF (SET SERVOS...)
       // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
