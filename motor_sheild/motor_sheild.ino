@@ -25,6 +25,6 @@ void loop() {
    if(checkMotorShieldMessage(usb, &toWrite)){
      //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
      //make sure this changes 
-     Serial.print(toWrite);//passing the pointer
+     Serial.println(toWrite);//passing the pointer
    }
 }

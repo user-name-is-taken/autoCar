@@ -12,7 +12,7 @@
 static const char SHIELD_PATTERN_START [] = "^MSv2_[67]%x_";
 static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
 //make sure you send hex bytes!
-static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]";
+static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
 
 static Adafruit_MotorShield *shields [32];
 // Initialized as all null
@@ -61,7 +61,6 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
  *   - example: MSv2_60_speed_1_10
  */
 boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
-   Serial.println("before speed set");
    String motorID = message.substring(15,16);//make sure this is the right length
    char carr [2];
    motorID.toCharArray(carr, 2);
@@ -118,8 +117,8 @@ boolean setMotorDir(String message, Adafruit_MotorShield shield){
 */
 boolean checkMotorShieldMessage(String message, String *toWrite){
   MatchState ms;
-  char buf [message.length() + 1];
-  message.toCharArray(buf, message.length() + 1);
+  char buf [message.length()];
+  message.toCharArray(buf, message.length());
   ms.Target(buf);
   char isForShield = ms.Match(SHIELD_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
@@ -132,31 +131,26 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
        *toWrite = String("MotorShield: That isn't a valid shield address." + message);
        return true;
     }
-    Serial.println("Hi!");
-    char isSpeed = ms.Match(SPEED_PATTERN);
-    if(isSpeed > 0){
+    if(ms.Match(SPEED_PATTERN) > 0){
       //parse out params
       //set speed on the shield
-      Serial.println("before calling setMotorSpeed");
+      Serial.println("speed");
       setMotorSpeed(message, as);
+      Serial.print("after speed");
+      *toWrite = String("MotorShield: speed set.");
       return true;
     }else if(ms.Match(DIR_PATTERN) > 0){
       //set direction
-      Serial.println("before calling setMotorDirection");
       setMotorDir(message, as);
       *toWrite = String("MotorShield: Direction set.");
       return true;
     //ADD OTHER STUFF (SET SERVOS...)
       // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
     }else{
-      Serial.println("no matches ");
-      Serial.print(buf);
-      Serial.println(isSpeed);
       *toWrite = String("MotorShield: No matching command found.");
       return true;
     }
   }else{
-    //*toWrite = String("MotorShield: Not for shield.");
     return false;
   }
 }
