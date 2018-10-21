@@ -61,7 +61,7 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
  *   - example: MSv2_60_speed_1_10
  */
 boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
-   String motorID = message.substring(15,16);//make sure this is the right length
+   String motorID = message.substring(14,15);//make sure this is the right length
    char carr [2];
    motorID.toCharArray(carr, 2);
    uint8_t motorAddr = strtol(carr, NULL, 16);
@@ -85,18 +85,17 @@ boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
  *   - example: MSv2_60_direction_1_1
  */
 boolean setMotorDir(String message, Adafruit_MotorShield shield){
-   String motorID = message.substring(19,20);//make sure this is the right length
+   String motorID = message.substring(18,19);//make sure this is the right length
    char carr [2];
    motorID.toCharArray(carr, 2);
    uint8_t motorAddr = strtol(carr, NULL, 16);
    
-   String dirIn = message.substring(21,23);//make sure this is the right length
+   String dirIn = message.substring(20,21);//make sure this is the right length
    char dirCarr [3];
    dirIn.toCharArray(dirCarr, 3);
    uint8_t intDir = strtol(dirCarr, NULL, 16);
 
    shield.getMotor(motorAddr)->run(intDir);
-   Serial.println("direction set");
    return true;
 }
 
