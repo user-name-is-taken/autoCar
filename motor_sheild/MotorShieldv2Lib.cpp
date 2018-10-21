@@ -9,7 +9,7 @@
 #include "MotorShieldv2Lib.h"
 
 
-static const char SHIELD_PATTERN_START [] = "^MSv2_[67][0-9A-Fa-f]_";//len == 8
+static const char SHIELD_PATTERN_START [] = "^MSv2_[67]%x_";
 static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
 //make sure you send hex bytes!
 static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
@@ -133,13 +133,14 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
        return true;
     }
     Serial.println("Hi!");
-    if(ms.Match(SPEED_PATTERN) == REGEXP_MATCHED){
+    char isSpeed = ms.Match(SPEED_PATTERN);
+    if(isSpeed > 0){
       //parse out params
       //set speed on the shield
       Serial.println("before calling setMotorSpeed");
       setMotorSpeed(message, as);
       return true;
-    }else if(ms.Match(DIR_PATTERN) == REGEXP_MATCHED){
+    }else if(ms.Match(DIR_PATTERN) > 0){
       //set direction
       Serial.println("before calling setMotorDirection");
       setMotorDir(message, as);
@@ -150,6 +151,7 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
     }else{
       Serial.println("no matches ");
       Serial.print(buf);
+      Serial.println(isSpeed);
       *toWrite = String("MotorShield: No matching command found.");
       return false;
     }
