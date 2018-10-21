@@ -12,7 +12,7 @@
 static const char SHIELD_PATTERN_START [] = "^MSv2_[67]%x_";
 static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
 //make sure you send hex bytes!
-static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
+static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]";
 
 static Adafruit_MotorShield *shields [32];
 // Initialized as all null
@@ -126,7 +126,7 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
   if(isForShield > 0){
     //parse out which shield, set it as a variable
-    Adafruit_MotorShield as = Adafruit_MotorShield();//can't be named asm?
+    Adafruit_MotorShield as;//can't be named asm?
     if(!getMotorShield(message, &as)){
        //set toWrite to an error message saying this isn't a valid number
        *toWrite = String("MotorShield: That isn't a valid shield address." + message);
@@ -153,7 +153,7 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
       Serial.print(buf);
       Serial.println(isSpeed);
       *toWrite = String("MotorShield: No matching command found.");
-      return false;
+      return true;
     }
   }else{
     //*toWrite = String("MotorShield: Not for shield.");
