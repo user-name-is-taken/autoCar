@@ -10,9 +10,9 @@
 
 
 static const char SHIELD_PATTERN_START [] = "^MSv2_[67][0-9A-Fa-f]_";//len == 8
-static const char SPEED_PATTERN [] = "^MSv2_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$";
+static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
 //make sure you send hex bytes!
-static const char DIR_PATTERN [] = "^MSv2_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$";
+static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
 
 static Adafruit_MotorShield *shields [32];
 // Initialized as all null
@@ -132,21 +132,24 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
        *toWrite = String("MotorShield: That isn't a valid shield address." + message);
        return true;
     }
-    
-    if(ms.Match(SPEED_PATTERN) > 0){
+    Serial.println("Hi!");
+    if(ms.Match(SPEED_PATTERN) == REGEXP_MATCHED){
       //parse out params
       //set speed on the shield
       Serial.println("before calling setMotorSpeed");
       setMotorSpeed(message, as);
       return true;
-    }else if(ms.Match(DIR_PATTERN) > 0){
+    }else if(ms.Match(DIR_PATTERN) == REGEXP_MATCHED){
       //set direction
+      Serial.println("before calling setMotorDirection");
       setMotorDir(message, as);
       *toWrite = String("MotorShield: Direction set.");
       return true;
     //ADD OTHER STUFF (SET SERVOS...)
       // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
     }else{
+      Serial.println("no matches ");
+      Serial.print(buf);
       *toWrite = String("MotorShield: No matching command found.");
       return false;
     }
