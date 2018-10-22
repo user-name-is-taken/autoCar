@@ -96,6 +96,7 @@ boolean setMotorDir(String message, Adafruit_MotorShield shield){
    uint8_t intDir = strtol(dirCarr, NULL, 16);
 
    shield.getMotor(motorAddr)->run(intDir);
+   Serial.println("direction set");
    return true;
 }
 
