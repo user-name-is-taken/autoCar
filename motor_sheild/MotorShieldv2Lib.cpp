@@ -129,27 +129,29 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
     if(!getMotorShield(message, &as)){
        //set toWrite to an error message saying this isn't a valid number
        *toWrite = String("MotorShield: That isn't a valid shield address." + message);
-       return true;
-    }
-    if(ms.Match(SPEED_PATTERN) > 0){
-      //parse out params
-      //set speed on the shield
-      Serial.println("speed");
-      setMotorSpeed(message, as);
-      Serial.print("after speed");
-      *toWrite = String("MotorShield: speed set.");
-      return true;
-    }else if(ms.Match(DIR_PATTERN) > 0){
-      //set direction
-      setMotorDir(message, as);
-      *toWrite = String("MotorShield: Direction set.");
-      return true;
-    //ADD OTHER STUFF (SET SERVOS...)
-      // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
     }else{
-      *toWrite = String("MotorShield: No matching command found.");
-      return true;
+      if(ms.Match(SPEED_PATTERN) > 0){
+        //parse out params
+        //set speed on the shield
+        if(setMotorSpeed(message, as)){
+          *toWrite = String("MotorShield: speed set success.");  
+        }else{
+          *toWrite = String("MotorShield: speed set fail.");
+        }
+      }else if(ms.Match(DIR_PATTERN) > 0){
+        //set direction
+        if(setMotorDir(message, as)){
+          *toWrite = String("MotorShield: direction set success.");
+        }else{
+          *toWrite = String("MotorShield: direction set failed.");
+        }
+      //ADD OTHER STUFF (SET SERVOS...)
+        // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
+      }else{
+        *toWrite = String("MotorShield: No matching command found.");
+      }
     }
+    return true;
   }else{
     return false;
   }
