@@ -44,10 +44,11 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
    if(addr<96 || addr > 127){
      return false;
    }
-   if(!shields[addr - 96]){//checks for null pointer
+   if(!shields[addr - 96]){//makes sure it's a null pointer
       //Adafruit_MotorShield *AMS = malloc(sizeof(Adafruit_MotorShield));
       //AMS->add
       Adafruit_MotorShield AMS = Adafruit_MotorShield(addr);
+      AMS.begin();
       shields[addr - 96] = &AMS;
    }
    *shield = *shields[addr - 96]; 
@@ -71,8 +72,9 @@ boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
    speedIn.toCharArray(speedCarr, 3);
    uint8_t intSpeed = strtol(speedCarr, NULL, 16);
    
+   Serial.println("speed set");//not sure why I need this line
    shield.getMotor(motorAddr)->setSpeed(intSpeed);
-   Serial.println("speed set");
+   
    return true;
 }
 
@@ -91,12 +93,17 @@ boolean setMotorDir(String message, Adafruit_MotorShield shield){
    uint8_t motorAddr = strtol(carr, NULL, 16);
    
    String dirIn = message.substring(20,21);//make sure this is the right length
-   char dirCarr [3];
-   dirIn.toCharArray(dirCarr, 3);
-   uint8_t intDir = strtol(dirCarr, NULL, 16);
+   
+   if(dirIn.equals("0")){
+     shield.getMotor(motorAddr)->run(RELEASE); 
+   }else if (dirIn.equals("1")){
+     shield.getMotor(motorAddr)->run(FORWARD);
+   }else if (dirIn.equals("2")){
+     shield.getMotor(motorAddr)->run(BACKWARD);
+   }else{
+    return false;
+   }
 
-   shield.getMotor(motorAddr)->run(intDir);
-   Serial.println("direction set");
    return true;
 }
 
