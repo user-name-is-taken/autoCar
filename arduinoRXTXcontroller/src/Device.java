@@ -4,6 +4,7 @@ import gnu.io.SerialPort;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 
 /**
  * Classes that inherit this can write to and read from the serial port.
@@ -32,12 +33,12 @@ import java.io.OutputStream;
  * @author pi
  *
  */
-public abstract class Device {
+public class Device{
 	String name;
 	SerialWriter writer;
 	SerialReader reader;
 	SerialPort serialPort;
-	
+	HashMap<String, ArduinoAPI> APIs;
 	
 	public Device(String name){
 		setName(name);
@@ -49,16 +50,36 @@ public abstract class Device {
 	}
 	
 	/**
+	 * This adds an API the connected arduino can use. For example the motor API can control motors
+	 * @param name A unique identifier for the API name.
+	 * @param api The actual api. Note,  You COULD have API objects of the same type. For example if you have two motor controllers connected,
+	 * You'd need an API for each because APIs also store state information.
+	 */
+	public void addAPI(String name, ArduinoAPI api){
+		APIs.put(name, api);
+	}
+	
+	
+	
+	/**
 	 * This message is called when a device sends a message to the pi
+	 * 
+	 * If an API gets a message and can process it, it will return true.
 	 * @param message - the message received.
 	 */
-	abstract void receive(String message);
+	protected void receive(String message){
+		for(ArduinoAPI api : APIs.values()){
+			if(api.receive(message))
+				break;
+		}
+		//error, nothing
+	}
 	
 	/**
 	 * This sends data to the device
 	 * @param message the data to be sent
 	 */
-	public void send(String message){
+	protected void send(String message){
 		this.writer.write(message);
 	}
 	
@@ -66,7 +87,7 @@ public abstract class Device {
 	 * gets the name of the device
 	 * @return name the name of the port the device is connected to. (ex: /dev/ttyUSB1)
 	 */
-	String getName(){
+	public String getName(){
 		return this.name;
 	}
 	
@@ -84,7 +105,7 @@ public abstract class Device {
 	 * 
 	 * @throws Exception because that's what the example told me to do
 	 */
-	void connect () throws Exception{
+	protected void connect () throws Exception{
 		   connect(57600,SerialPort.DATABITS_8,SerialPort.STOPBITS_1,SerialPort.PARITY_NONE);
 	   }
 	
@@ -100,7 +121,7 @@ public abstract class Device {
 	 * @param parity defines how error checking is done
 	 * @throws Exception see connect()
 	 */
-   void connect (int speed, int bits, int stop_bits, int parity) throws Exception
+   protected void connect (int speed, int bits, int stop_bits, int parity) throws Exception
     {
         CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(this.getName());
         if ( portIdentifier.isCurrentlyOwned() )

@@ -4,6 +4,11 @@ import java.io.InputStream;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 
+/**
+ * This class is straight from the documentation on RXTX
+ * @author pi
+ *
+ */
 
 public class SerialReader implements SerialPortEventListener {
 
