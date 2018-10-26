@@ -29,7 +29,7 @@ static Adafruit_MotorShield *shields [32];
  * Converts the message from the Serial port to its corresponding motor
  * 
  */
-boolean getMotorShield(String message, Adafruit_MotorShield *shield){
+int getMotorShield(String message){
 // * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
 // the above might help with the conversion
 //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
@@ -42,17 +42,18 @@ boolean getMotorShield(String message, Adafruit_MotorShield *shield){
    uint8_t addr = strtol(carr, NULL, 16);
    //MSv2_60_speed_1_10
    if(addr < 96 || addr > 127){
-     return false;
+     return -1;
    }
+
    if(!shields[addr - 96]){//makes sure it's a null pointer
-      //Adafruit_MotorShield *AMS = malloc(sizeof(Adafruit_MotorShield));
-      //AMS->add
-      Adafruit_MotorShield AMS = Adafruit_MotorShield(addr);
-      AMS.begin();
-      shields[addr - 96] = &AMS;
+      Serial.println("creating shield");
+      shields[addr - 96] = new Adafruit_MotorShield;
+      *shields[addr - 96] = Adafruit_MotorShield(addr);
+      Serial.println("created");
+      shields[addr - 96]->begin();
+      Serial.println("began");
    }
-   *shield = *shields[addr - 96]; 
-   return true;
+   return (int)(addr - 96);
 };
 
 /*
@@ -135,23 +136,25 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
   if(isForShield > 0){
     //parse out which shield, set it as a variable
-    Adafruit_MotorShield as;//can't be named asm?
-    //You might be overwriting this pointer
-    if(!getMotorShield(message, &as)){
+    Serial.println("for shield");
+    int shieldInt = getMotorShield(message);
+    Serial.println(shieldInt);
+    if(shieldInt < 0){
        //set toWrite to an error message saying this isn't a valid number
        *toWrite = String("MotorShield: That isn't a valid shield address." + message);
     }else{
+      Serial.println("shieldInt gotten success");
       if(ms.Match(SPEED_PATTERN) > 0){
         //parse out params
         //set speed on the shield
-        if(setMotorSpeed(message, as)){
+        if(setMotorSpeed(message, *shields[shieldInt])){
           *toWrite = String("MotorShield: speed set success.");  
         }else{
           *toWrite = String("MotorShield: speed set fail.");
         }
       }else if(ms.Match(DIR_PATTERN) > 0){
         //set direction
-        if(setMotorDir(message, as)){
+        if(setMotorDir(message, *shields[shieldInt])){
           *toWrite = String("MotorShield: direction set success.");
         }else{
           *toWrite = String("MotorShield: direction set failed.");
