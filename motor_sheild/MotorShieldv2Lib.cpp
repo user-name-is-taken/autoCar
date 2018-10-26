@@ -1,8 +1,7 @@
 #include <Regexp.h>
-
 //from here: https://github.com/nickgammon/Regexp installed in computer's Arduino library, so you'll have to do this
 
-// https://www.youtube.com/watch?v=fE3Dw0slhIc
+// https://www.youtube.com/watch?v=fE3Dw0slhIc - arduino libraries
 #include <Wire.h> 
 // the serial library?
 #include <Adafruit_MotorShield.h>
@@ -26,14 +25,18 @@ static Adafruit_MotorShield *shields [32];
 
 
 /*
- * Converts the message from the Serial port to its corresponding motor
+ * Converts the message from the Serial port to its shield's int location 
+ * in the shields array.
  * 
+ * If a motor shield doesn't exist, it creates it before returning the int
+ * 
+ * Note: 0x70 is the broadcast
+ * 
+ * //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
  */
 int getMotorShield(String message){
 // * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
 // the above might help with the conversion
-//https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
-//Note: 0x70 is the broadcast
 
 //pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
    String shieldAddress = message.substring(5,7);//make sure this is the right length
@@ -45,19 +48,18 @@ int getMotorShield(String message){
      return -1;
    }
 
-   if(!shields[addr - 96]){//makes sure it's a null pointer
-      Serial.println("creating shield");
+   if(!shields[addr - 96]){//makes sure it's a null pointer before setting it
+    //This describes the pointer magic here:
+      //https://stackoverflow.com/questions/5467999/c-new-pointer-from-pointer-to-pointer#5468009
       shields[addr - 96] = new Adafruit_MotorShield;
       *shields[addr - 96] = Adafruit_MotorShield(addr);
-      Serial.println("created");
       shields[addr - 96]->begin();
-      Serial.println("began");
    }
    return (int)(addr - 96);
 };
 
 /*
- * gets the motor, then sets the speed
+ * gets the motor, then sets the speed. Speed is between 00 (0) and FF (255)
  * 
  * pattern: ^MSv2_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$
  *   - example: MSv2_60_speed_1_10
@@ -72,13 +74,7 @@ boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
    char speedCarr [3];
    speedIn.toCharArray(speedCarr, 3);
    uint8_t intSpeed = strtol(speedCarr, NULL, 16);
-   
-   Serial.println(motorAddr);
-   Serial.println("speed set");//not sure why I need this line
-   Serial.println(speedIn);
-   Serial.println(intSpeed);
    shield.getMotor(motorAddr)->setSpeed(intSpeed);
-   Serial.println("done set speed");
    
    return true;
 }
@@ -136,14 +132,11 @@ boolean checkMotorShieldMessage(String message, String *toWrite){
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
   if(isForShield > 0){
     //parse out which shield, set it as a variable
-    Serial.println("for shield");
     int shieldInt = getMotorShield(message);
-    Serial.println(shieldInt);
     if(shieldInt < 0){
        //set toWrite to an error message saying this isn't a valid number
        *toWrite = String("MotorShield: That isn't a valid shield address." + message);
     }else{
-      Serial.println("shieldInt gotten success");
       if(ms.Match(SPEED_PATTERN) > 0){
         //parse out params
         //set speed on the shield
