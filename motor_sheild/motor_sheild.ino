@@ -13,18 +13,34 @@ For use with the Adafruit Motor Shield v2
 #include <Adafruit_MotorShield.h>
 
 String toWrite;
+char *usb;
+byte counter;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
   Serial.println("Adafruit Motorshield v2 - DC Motor test!");
   toWrite = "";
+  counter = 0;
+  usb = new char[50];
+  //char letter;
 }
 
 void loop() {
-   String usb = Serial.readString();
-   if(checkMotorShieldMessage(usb, &toWrite)){
-     //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
-     //make sure this changes 
-     Serial.println(toWrite);//passing the pointer
-   }
+   while(Serial.available() > 0){
+      char letter = Serial.read();
+      if(letter != '.'){
+        usb[counter] = letter;
+        counter ++;
+      }else{
+        usb[counter] = '\0';
+        if(checkMotorShieldMessage(usb, &toWrite)){
+         //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
+         //make sure this changes 
+         Serial.println(toWrite);//passing the pointer
+         //delete usb;
+        }//you can check something else here
+        counter = 0;
+        //usb = new char[50];
+      }
+    }
 }
