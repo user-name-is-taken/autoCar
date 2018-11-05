@@ -26,21 +26,21 @@ void setup() {
 }
 
 void loop() {
+  if(Serial.available() > 0){
    while(Serial.available() > 0){
       char letter = Serial.read();
-      if(letter != '.'){
         usb[counter] = letter;
         counter ++;
-      }else{
-        usb[counter] = '\0';
-        if(checkMotorShieldMessage(usb, &toWrite)){
-         //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
-         //make sure this changes 
-         Serial.println(toWrite);//passing the pointer
-         //delete usb;
-        }//you can check something else here
-        counter = 0;
-        //usb = new char[50];
       }
-    }
+   usb[counter] = '\0';
+      if(checkMotorShieldMessage(usb, &toWrite)){
+       //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
+       //make sure this changes 
+       Serial.println(toWrite);//passing the pointer
+       //delete usb;
+      }//you can check something else here
+      counter = 0;
+      //delete usb;
+      usb = new char[50];
+    } 
 }
