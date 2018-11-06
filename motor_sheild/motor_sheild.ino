@@ -29,18 +29,23 @@ void loop() {
   if(Serial.available() > 0){
    while(Serial.available() > 0){
       char letter = Serial.read();
-        usb[counter] = letter;
-        counter ++;
-        //the last character is a new line, destroying my regex.
-        //how can I handle this?
-      }
-   usb[counter] = '\0';//not sure if this is necessary
-      if(checkMotorShieldMessage(usb, &toWrite)){
-       //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
-       //make sure this changes 
-       Serial.println(toWrite);//passing the pointer
-       //delete usb;
-      }//you can check something else here
-      counter = 0;
-    } 
+      if(letter == '\n')
+        break;//handles the last '\n' char of arduino serial input
+      usb[counter] = letter;
+      counter ++;
+      //the last character is a new line, destroying my regex.
+      //how can I handle this?
+   }
+   usb[counter] = '\0';//terminates the string (replacing the newline)
+   if(checkMotorShieldMessage(usb, &toWrite)){
+     //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
+     Serial.println(toWrite);//passing the pointer
+   }//you can check something else here (another API's check...)
+   counter = 0;
+   /*
+    * note, this program assumes the entire message is in the buffer
+    * when Serial.avaliable reads it, and that another message doesn't
+    * get put into the buffer until after you've read this one.
+    */
+ } 
 }

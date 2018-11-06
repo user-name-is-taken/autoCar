@@ -9,9 +9,9 @@
 
 
 static const char SHIELD_PATTERN_START [] = "^MSv2_[67]%x_";
-static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x";
+static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
 //make sure you send hex bytes!
-static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]";
+static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
 
 static Adafruit_MotorShield *shields [32];
 // Initialized as all null
