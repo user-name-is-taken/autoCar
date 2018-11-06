@@ -156,7 +156,6 @@ boolean checkMotorShieldMessage(char *message, String *toWrite){
         *toWrite = String("MotorShield: No matching command found.");
       }
     }
-    delete message;
     return true;
   }else{
     return false;

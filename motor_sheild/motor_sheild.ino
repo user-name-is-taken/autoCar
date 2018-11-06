@@ -31,8 +31,10 @@ void loop() {
       char letter = Serial.read();
         usb[counter] = letter;
         counter ++;
+        //the last character is a new line, destroying my regex.
+        //how can I handle this?
       }
-   usb[counter] = '\0';
+   usb[counter] = '\0';//not sure if this is necessary
       if(checkMotorShieldMessage(usb, &toWrite)){
        //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
        //make sure this changes 
@@ -40,7 +42,5 @@ void loop() {
        //delete usb;
       }//you can check something else here
       counter = 0;
-      //delete usb;
-      usb = new char[50];
     } 
 }
