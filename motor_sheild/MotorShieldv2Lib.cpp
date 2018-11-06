@@ -21,6 +21,19 @@ static Adafruit_MotorShield *shields [32];
   // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
   // In this array, [0] == address 0x60, [31] == address 0x7F
 
+/*
+ * converts a substring between A and B from message to a uint8_t
+ * 
+ * http://www.cplusplus.com/reference/cstring/strncpy/
+ * 
+ * Tested, it works
+ */
+uint8_t substr2num(char *message, int A, int B){
+  char str[(B - A) + 1];
+  strncpy(str, message + A, B - A);
+  str[B-A] = '\0';
+  return strtol(str, NULL, 16);
+}
 
 /*
  * Converts the message from the Serial port to its shield's int location 
@@ -32,15 +45,12 @@ static Adafruit_MotorShield *shields [32];
  * 
  * //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
  */
-int getMotorShield(String message){
+int getMotorShield(char *message){
 // * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
 // the above might help with the conversion
 
 //pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
-   String shieldAddress = message.substring(5,7);//make sure this is the right length
-   char carr [3];
-   shieldAddress.toCharArray(carr, 3);
-   uint8_t addr = strtol(carr, NULL, 16);
+   char addr = substr2num(message, 5,7);//make sure this is the right length
    //MSv2_60_speed_1_10
    if(addr < 96 || addr > 127){
      return -1;
@@ -62,16 +72,11 @@ int getMotorShield(String message){
  * pattern: ^MSv2_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$
  *   - example: MSv2_60_speed_1_10
  */
-boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
-   String motorID = message.substring(14,15);//make sure this is the right length
-   char carr [2];
-   motorID.toCharArray(carr, 2);
-   uint8_t motorAddr = strtol(carr, NULL, 16);
+boolean setMotorSpeed(char *message, Adafruit_MotorShield shield){
+   uint8_t motorAddr = substr2num(message, 14, 15);//make sure this is the right length
+
+   uint8_t intSpeed = substr2num(message, 16, 18);//make sure this is the right length
    
-   String speedIn = message.substring(16,18);//make sure this is the right length
-   char speedCarr [3];
-   speedIn.toCharArray(speedCarr, 3);
-   uint8_t intSpeed = strtol(speedCarr, NULL, 16);
    shield.getMotor(motorAddr)->setSpeed(intSpeed);
    
    return true;
@@ -85,19 +90,14 @@ boolean setMotorSpeed(String message, Adafruit_MotorShield shield){
  * DIR_PATTERN: ^MSv2_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$
  *   - example: MSv2_60_direction_1_1
  */
-boolean setMotorDir(String message, Adafruit_MotorShield shield){
-   String motorID = message.substring(18,19);//make sure this is the right length
-   char carr [2];
-   motorID.toCharArray(carr, 2);
-   uint8_t motorAddr = strtol(carr, NULL, 16);
+boolean setMotorDir(char *message, Adafruit_MotorShield shield){
+   uint8_t motorAddr = substr2num(message, 18,19);//make sure this is the right length
    
-   String dirIn = message.substring(20,21);//make sure this is the right length
-   
-   if(dirIn.equals("0")){
+   if(message[20] == '0'){
      shield.getMotor(motorAddr)->run(RELEASE); 
-   }else if (dirIn.equals("1")){
+   }else if (message[20] == '1'){
      shield.getMotor(motorAddr)->run(FORWARD);
-   }else if (dirIn.equals("2")){
+   }else if (message[20] == '2'){
      shield.getMotor(motorAddr)->run(BACKWARD);
    }else{
     return false;
@@ -120,20 +120,20 @@ boolean setMotorDir(String message, Adafruit_MotorShield shield){
  *   Remember, you NEED to de-reference toWrite with this: https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
  
 */
-boolean checkMotorShieldMessage(String message, String *toWrite){
+boolean checkMotorShieldMessage(char *message, String *toWrite){
   MatchState ms;
-  char buf [message.length()];
-  message.toCharArray(buf, message.length());
-  ms.Target(buf);
+  ms.Target(message);
+  Serial.println(message);
   char isForShield = ms.Match(SHIELD_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
   if(isForShield > 0){
     //parse out which shield, set it as a variable
+    Serial.println("match");//only works on the first one?
     int shieldInt = getMotorShield(message);
     if(shieldInt < 0){
        //set toWrite to an error message saying this isn't a valid number
-       *toWrite = String("MotorShield: That isn't a valid shield address." + message);
+       *toWrite = String("MotorShield: That isn't a valid shield address." + String(message));
     }else{
       if(ms.Match(SPEED_PATTERN) > 0){
         //parse out params
