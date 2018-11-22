@@ -40,7 +40,10 @@ void loop() {
    if(checkMotorShieldMessage(usb, &toWrite)){
      //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
      Serial.println(toWrite);//passing the pointer
-   }//you can check something else here (another API's check...)
+   }else if(usb == "APIs"){//tells what APIs are connected
+     Serial.println(toWrite);
+      //you can check something else here (another API's check...)
+   }
    counter = 0;
    /*
     * note, this program assumes the entire message is in the buffer
