@@ -1,8 +1,8 @@
 package com.example.non_admin.picar;
 
-import gnu.io.CommPort;
-import gnu.io.CommPortIdentifier;
-import gnu.io.SerialPort;
+import android.content.Context;
+import android.hardware.usb.UsbManager;
+
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,6 +41,8 @@ public class Device{
 	SerialReader reader;
 	SerialPort serialPort;
 	HashMap<String, ArduinoAPI> APIs;
+	// make a singleton device manager
+	UsbManager usbManager;
 	
 	public Device(String name){
 		setName(name);
@@ -50,6 +52,7 @@ public class Device{
 			e.printStackTrace();
 		}
 	}
+
 	
 	/**
 	 * This adds an API the connected arduino can use. For example the motor API can control motors

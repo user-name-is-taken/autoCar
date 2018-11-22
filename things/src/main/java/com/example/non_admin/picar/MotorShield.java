@@ -1,6 +1,7 @@
 package com.example.non_admin.picar;
 
-import javax.swing.JOptionPane;
+import android.util.Log;
+
 /**
  * currently this class only does methods for motors,
  * but in the future it will do methods for all Motor shield hardware namely:
@@ -23,7 +24,7 @@ public class MotorShield extends ArduinoAPI {
 	@Override
 	protected boolean receive(String message) {
 		// TODO Auto-generated method stub
-		JOptionPane.showMessageDialog(null, message);
+		Log.e("MSv2:",message);
 		return false;
 	}
 	
@@ -33,6 +34,9 @@ public class MotorShield extends ArduinoAPI {
 	 */
 	public void setDirection(boolean direction, int motor){
 		//validate
+		//format = ^MSv2_[67]%x_direction_[1-4]_[0-2]$
+		//convert those ints to bytes before sending
+		//name is the board (default 60)
 		this.direction[motor-1] = direction;
 		this.dev.send(motor + (direction?"1":"0"));//add the motor to this
 	}
@@ -52,7 +56,7 @@ public class MotorShield extends ArduinoAPI {
 	 * @param speed
 	 */
 	public void setSpeed(int speed,int motor){
-		//validate
+		//format = ^MSv2_[67]%x_speed_[1-4]_%x%x$
 		this.speed[motor-1] = speed;
 		this.dev.send(""+speed);
 	}
