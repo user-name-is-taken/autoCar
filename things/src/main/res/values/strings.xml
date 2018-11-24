@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">piCar</string>
+    <string-array name="APIs">
+        <item name="com.example.non_admin.picar.MotorShield">MSv2</item>
+
+    </string-array>
 </resources>

@@ -12,13 +12,14 @@ import android.util.Log;
  */
 public class MotorShield extends ArduinoAPI {
 	
-	public MotorShield(String name, Device dev) {
-		super(name, dev);
+	public MotorShield(Device dev) {
+		super("MSv2", dev);
 		// TODO Auto-generated constructor stub
 	}
 
 	boolean[] direction = {true, true, true, true};
 	int[] speed = {0,0,0,0};
+
 
 
 	@Override

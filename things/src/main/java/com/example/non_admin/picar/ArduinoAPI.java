@@ -1,22 +1,33 @@
 package com.example.non_admin.picar;
 
+import android.content.res.Resources;
+
 public abstract class ArduinoAPI {
-	String name;
+	private String name;
 	Device dev;
 	
 	/**
 	 * Creates the API object and adds it to the device.
 	 * 
-	 * @param name The name of the API, this is used as the PK in Device.
+	 * @param APIname The name of the API, this is used as the PK in Device.
 	 * @param dev The Device that this API is connected to. This is the Device the API sends over.
 	 */
-	public ArduinoAPI(String name, Device dev) {
+	public ArduinoAPI(String APIname, Device dev) {
 		// TODO Auto-generated constructor stub
 		super();
-		dev.addAPI(name, this);
-		this.name = name;
+		setAPIname(APIname);
+		dev.addAPI(APIname, this);
 		this.dev = dev;
 	}
+
+	public String getAPIname(){
+		return this.name;
+	}
+
+	private void setAPIname(String name){
+		this.name = name;
+	}
+
 	
 	/**
 	 * The method the Device calls when it receives a message.

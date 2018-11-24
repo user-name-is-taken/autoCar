@@ -1,14 +1,26 @@
 package com.example.non_admin.picar;
 
 import android.content.Context;
+import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.hardware.usb.UsbDeviceConnection;
+import android.util.Log;
 
+import java.io.UnsupportedEncodingException;
+import com.felhr.usbserial.UsbSerialDevice;
+import com.felhr.usbserial.UsbSerialInterface;
+//https://github.com/Nilhcem/usbfun-androidthings/blob/master/mobile/src/main/java/com/nilhcem/usbfun/mobile/MainActivity.java
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
+//import UsbSerial;
 
 /**
+ * see the following 3 links:
+ *   - https://github.com/Nilhcem/usbfun-androidthings/blob/master/mobile/src/main/java/com/nilhcem/usbfun/mobile/MainActivity.java)
+ *   - http://nilhcem.com/android-things/usb-communications
+ *   - https://github.com/felHR85/UsbSerial
  * Classes that inherit this can write to and read from the serial port.
  * They MUST override the void receive(String) method that's called when they get input.
  * Devices must be serial devices (not parallel)
@@ -36,16 +48,54 @@ import java.util.HashMap;
  *
  */
 public class Device{
+    private static final String TAG = "Device";
 	String name;
-	SerialWriter writer;
-	SerialReader reader;
-	SerialPort serialPort;
-	HashMap<String, ArduinoAPI> APIs;
+	private HashMap<String, ArduinoAPI> APIs;
 	// make a singleton device manager
-	UsbManager usbManager;
+	UsbDevice mDevice;
+	private UsbManager usbManager;
+    private UsbDeviceConnection connection;
+    private UsbSerialDevice serialDevice;
+    private String buffer = "";
+
+    private UsbSerialInterface.UsbReadCallback callback;
 	
-	public Device(String name){
+	public Device(String name, UsbDevice mDevice){
+		this.mDevice = mDevice;
 		setName(name);
+        callback = new UsbSerialInterface.UsbReadCallback() {
+            /**
+             * This message is called when a device sends a message to the pi
+             *
+             * If an API gets a message and can process it, it will return true.
+             * @param data - the message received.
+             */
+            @Override
+            public void onReceivedData(byte[] data) {
+                try {
+
+                    String dataUtf8 = new String(data, "UTF-8");
+                    Log.i(TAG, "Data received: " + dataUtf8);
+/*
+                buffer += dataUtf8;
+
+                int index;
+                while ((index = buffer.indexOf('\n')) != -1) {
+                    String dataStr = buffer.substring(0, index + 1).trim();
+                    buffer = buffer.length() == index ? "" : buffer.substring(index + 1);
+                    Log.d(TAG, "data received");
+                }
+*/
+                    for(ArduinoAPI api : APIs.values()){
+                        if(api.receive(dataUtf8))
+                            break;
+                    }
+                } catch (UnsupportedEncodingException e) {
+                    Log.e(TAG, "Error receiving USB data", e);
+                }
+            }
+
+        };
 		try{
 			this.connect();
 		}catch(Exception e){
@@ -63,29 +113,14 @@ public class Device{
 	public void addAPI(String name, ArduinoAPI api){
 		APIs.put(name, api);
 	}
-	
-	
-	
-	/**
-	 * This message is called when a device sends a message to the pi
-	 * 
-	 * If an API gets a message and can process it, it will return true.
-	 * @param message - the message received.
-	 */
-	protected void receive(String message){
-		for(ArduinoAPI api : APIs.values()){
-			if(api.receive(message))
-				break;
-		}
-		//error, nothing
-	}
+
 	
 	/**
 	 * This sends data to the device
 	 * @param message the data to be sent
 	 */
 	protected void send(String message){
-		this.writer.write(message);
+
 	}
 	
 	/**
@@ -107,12 +142,12 @@ public class Device{
 	/**
 	 * connects to a physical device and sets up the SerialReader reader and SerialWriter writer 
 	 * member variables. These are 
-	 * 
-	 * @throws Exception because that's what the example told me to do
+	 *
 	 */
-	protected void connect () throws Exception{
-		   connect(57600,SerialPort.DATABITS_8,SerialPort.STOPBITS_1,SerialPort.PARITY_NONE);
-	   }
+	protected void connect (){
+	    //connect(57600,SerialPort.DATABITS_8,SerialPort.STOPBITS_1,SerialPort.PARITY_NONE);
+        startSerialConnection(this.mDevice);
+	}
 	
 	/** see connect(), This does the same thing as it, but it lets you set the serial communication
 	 * paramaters yourself instead of assuming defaults.
@@ -126,43 +161,33 @@ public class Device{
 	 * @param parity defines how error checking is done
 	 * @throws Exception see connect()
 	 */
-   protected void connect (int speed, int bits, int stop_bits, int parity) throws Exception
+   protected void connect (int speed, int bits, int stop_bits, int parity)
     {
-        CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(this.getName());
-        if ( portIdentifier.isCurrentlyOwned() )
-        {
-            System.out.println("Error: Port is currently in use");
+        connect();
+    }
+    private void startSerialConnection(UsbDevice device) {
+        Log.i(TAG, "Ready to open USB device connection");
+        connection = usbManager.openDevice(device);
+        serialDevice = UsbSerialDevice.createUsbSerialDevice(device, connection);
+        if (serialDevice != null) {
+            if (serialDevice.open()) {
+                serialDevice.setBaudRate(115200);
+                serialDevice.setDataBits(UsbSerialInterface.DATA_BITS_8);
+                serialDevice.setStopBits(UsbSerialInterface.STOP_BITS_1);
+                serialDevice.setParity(UsbSerialInterface.PARITY_NONE);
+                serialDevice.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
+                serialDevice.read(callback);
+                Log.i(TAG, "Serial connection opened");
+            } else {
+                Log.w(TAG, "Cannot open serial connection");
+            }
+        } else {
+            Log.w(TAG, "Could not create Usb Serial Device");
         }
-        else
-        {
-            CommPort commPort = portIdentifier.open(this.getClass().getName(),2000);
-            
-            if ( commPort instanceof SerialPort )
-            {
-                this.serialPort = (SerialPort) commPort;
-                this.serialPort.setSerialPortParams( speed, bits, stop_bits, parity);
-                
-                InputStream in = this.serialPort.getInputStream();
-                OutputStream out = this.serialPort.getOutputStream();
-                
-                this.writer = new SerialWriter(out);
-                (new Thread(this.writer)).start();
-                
-                this.reader = new SerialReader(in, this);
-                this.serialPort.addEventListener(this.reader);
-                
-                this.serialPort.notifyOnDataAvailable(true);
-
-            }
-            else
-            {
-                System.out.println("Error: Only serial ports are handled by this example.");
-            }
-        }     
     }
 
    public void killConnection(){
-	   this.serialPort.removeEventListener();
-	   this.serialPort.close();
+	   //this.serialPort.removeEventListener();
+	   //this.serialPort.close();
    }
 }
