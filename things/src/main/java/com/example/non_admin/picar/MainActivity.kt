@@ -9,6 +9,7 @@ import java.io.IOException
 import android.util.Log
 import com.google.android.things.contrib.driver.pwmservo.Servo
 import com.google.android.things.pio.PeripheralManager
+import java.util.HashSet
 import java.util.logging.Logger
 
 private val TAG = MainActivity::class.java.simpleName
@@ -20,14 +21,27 @@ class MainActivity : Activity() {
 Here's the ultimate guide on this:
 http://nilhcem.com/android-things/usb-communications
  */
+    //This is how you specify statics in Kotlin
+    companion object {
+        val devices : HashSet<Device> = HashSet<Device>()
+        //This set will contain all the devices.
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         var device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
         if(device === null){
-            Log.e("hi", "no usb!")//change this to logging?
+            Log.e(TAG, "no usb!")//change this to logging?
         }else{
-            Log.d("hi","device found")
+            Log.d(TAG,"device found")
+            if(MainActivity.devices.contains(UsbDevice: device)) {
+                //TODO: fix this cocntains
+                //TODO: add a way for a programmer to access devices by name, vendor ID, Product ID...
+                    // not by device object
+
+            }else{
+                MainActivity.devices.add(Device(device));
+            }
         }
 
         //wireless debugging:

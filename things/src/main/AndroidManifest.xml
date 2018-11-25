@@ -22,6 +22,11 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
+                <!--
+                Not sure how to specify detached intent
+                https://stackoverflow.com/questions/15763159/detecting-when-a-usb-device-is-detached-on-android
+                -->
             </intent-filter>
             <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />

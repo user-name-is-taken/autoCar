@@ -59,10 +59,14 @@ public class Device{
     private String buffer = "";
 
     private UsbSerialInterface.UsbReadCallback callback;
-	
-	public Device(String name, UsbDevice mDevice){
+
+	/**
+	 * constructor
+	 * @param mDevice
+	 */
+	public Device(UsbDevice mDevice){
 		this.mDevice = mDevice;
-		setName(name);
+
         callback = new UsbSerialInterface.UsbReadCallback() {
             /**
              * This message is called when a device sends a message to the pi
@@ -103,12 +107,42 @@ public class Device{
 		}
 	}
 
+	@Override
+	public boolean equals(Object other){
+		if(other instanceof Device)
+			return this.equals((Device) other);
+		else if (other instanceof UsbDevice)
+		    return this.equals((UsbDevice) other);
+		else
+			return super.equals(other);
+	}
+
+	public boolean equals(UsbDevice other){
+		return this.mDevice.equals(other);
+	}
+
+	public boolean equals(Device other){
+		return this.mDevice.equals(other.getDevice());
+	}
+
+
+	@Override
+	public int hashCode() {
+		return this.mDevice.hashCode();
+	}
+
+	public UsbDevice getDevice(){
+		return this.mDevice;
+	}
+
 	
 	/**
 	 * This adds an API the connected arduino can use. For example the motor API can control motors
 	 * @param name A unique identifier for the API name.
 	 * @param api The actual api. Note,  You COULD have API objects of the same type. For example if you have two motor controllers connected,
 	 * You'd need an API for each because APIs also store state information.
+	 *
+	 *  TODO: delete this?
 	 */
 	public void addAPI(String name, ArduinoAPI api){
 		APIs.put(name, api);
