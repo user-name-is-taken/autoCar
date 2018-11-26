@@ -1,6 +1,7 @@
 package com.example.non_admin.picar
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
@@ -21,26 +22,19 @@ class MainActivity : Activity() {
 Here's the ultimate guide on this:
 http://nilhcem.com/android-things/usb-communications
  */
-    //This is how you specify statics in Kotlin
-    companion object {
-        val devices : HashSet<Device> = HashSet<Device>()
-        //This set will contain all the devices.
-    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Device.setUsbManager(getSystemService(Context.USB_SERVICE) as UsbManager)
 
         var device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
         if(device === null){
             Log.e(TAG, "no usb!")//change this to logging?
         }else{
             Log.d(TAG,"device found")
-            if(MainActivity.devices.contains(UsbDevice: device)) {
+            if(!Device.devSet.contains(device)) {
                 //TODO: fix this cocntains
-                //TODO: add a way for a programmer to access devices by name, vendor ID, Product ID...
-                    // not by device object
-
-            }else{
-                MainActivity.devices.add(Device(device));
+                Device(device);//add to the static device in the Device constructor
             }
         }
 

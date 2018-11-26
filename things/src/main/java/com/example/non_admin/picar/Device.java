@@ -14,6 +14,9 @@ import com.felhr.usbserial.UsbSerialInterface;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.HashSet;
+
+import static android.support.v4.content.ContextCompat.getSystemService;
 //import UsbSerial;
 
 /**
@@ -42,21 +45,26 @@ import java.util.HashMap;
  * then, make `/usr/share/java:/usr/lib/jni` the native library location of the RXTXcomm.jar
  * when you add it to the build path
  * 
- * 
- * 
+ *
  * @author pi
  *
  */
 public class Device{
+    private static UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE;
+    public static HashSet<Device> devSet;
+    public static HashMap<String, Device> devName;
+
     private static final String TAG = "Device";
 	String name;
 	private HashMap<String, ArduinoAPI> APIs;
 	// make a singleton device manager
-	UsbDevice mDevice;
-	private UsbManager usbManager;
+	private UsbDevice mDevice;
     private UsbDeviceConnection connection;
     private UsbSerialDevice serialDevice;
     private String buffer = "";
+
+    //These store the devices
+
 
     private UsbSerialInterface.UsbReadCallback callback;
 
@@ -65,6 +73,7 @@ public class Device{
 	 * @param mDevice
 	 */
 	public Device(UsbDevice mDevice){
+		// add to devSet and devName in here
 		this.mDevice = mDevice;
 
         callback = new UsbSerialInterface.UsbReadCallback() {
@@ -73,6 +82,7 @@ public class Device{
              *
              * If an API gets a message and can process it, it will return true.
              * @param data - the message received.
+             * TODO: get device name and APIs from the device
              */
             @Override
             public void onReceivedData(byte[] data) {
@@ -90,9 +100,10 @@ public class Device{
                     Log.d(TAG, "data received");
                 }
 */
+                    //call addAPIs here
                     for(ArduinoAPI api : APIs.values()){
                         if(api.receive(dataUtf8))
-                            break;
+                            break;//the callback was for the api
                     }
                 } catch (UnsupportedEncodingException e) {
                     Log.e(TAG, "Error receiving USB data", e);
@@ -102,10 +113,15 @@ public class Device{
         };
 		try{
 			this.connect();
+            this.serialDevice.read(callback);//adding a callback to the connection
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 	}
+
+	public static void setUsbManager(UsbManager usb){
+        usbManager = usb;
+    }
 
 	@Override
 	public boolean equals(Object other){
@@ -154,7 +170,7 @@ public class Device{
 	 * @param message the data to be sent
 	 */
 	protected void send(String message){
-
+	    this.serialDevice.write(message.getBytes());
 	}
 	
 	/**
@@ -180,7 +196,8 @@ public class Device{
 	 */
 	protected void connect (){
 	    //connect(57600,SerialPort.DATABITS_8,SerialPort.STOPBITS_1,SerialPort.PARITY_NONE);
-        startSerialConnection(this.mDevice);
+		this.connect (115200, UsbSerialInterface.DATA_BITS_8,
+				UsbSerialInterface.STOP_BITS_1, UsbSerialInterface.PARITY_NONE);
 	}
 	
 	/** see connect(), This does the same thing as it, but it lets you set the serial communication
@@ -194,31 +211,29 @@ public class Device{
 	 * @param stop_bits defines # of trailing bits added to mark the end of the word.
 	 * @param parity defines how error checking is done
 	 * @throws Exception see connect()
+	 * maybe add flow control to this???
 	 */
    protected void connect (int speed, int bits, int stop_bits, int parity)
     {
-        connect();
+		Log.i(TAG, "Ready to open USB device connection");
+		connection = usbManager.openDevice(this.mDevice);
+		serialDevice = UsbSerialDevice.createUsbSerialDevice(this.mDevice, connection);
+		if (serialDevice != null) {
+			if (serialDevice.open()) {
+				serialDevice.setBaudRate(speed);
+				serialDevice.setDataBits(bits);
+				serialDevice.setStopBits(stop_bits);
+				serialDevice.setParity(parity);
+				serialDevice.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
+				Log.i(TAG, "Serial connection opened");
+			} else {
+				Log.w(TAG, "Cannot open serial connection");
+			}
+		} else {
+			Log.w(TAG, "Could not create Usb Serial Device");
+		}
     }
-    private void startSerialConnection(UsbDevice device) {
-        Log.i(TAG, "Ready to open USB device connection");
-        connection = usbManager.openDevice(device);
-        serialDevice = UsbSerialDevice.createUsbSerialDevice(device, connection);
-        if (serialDevice != null) {
-            if (serialDevice.open()) {
-                serialDevice.setBaudRate(115200);
-                serialDevice.setDataBits(UsbSerialInterface.DATA_BITS_8);
-                serialDevice.setStopBits(UsbSerialInterface.STOP_BITS_1);
-                serialDevice.setParity(UsbSerialInterface.PARITY_NONE);
-                serialDevice.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
-                serialDevice.read(callback);
-                Log.i(TAG, "Serial connection opened");
-            } else {
-                Log.w(TAG, "Cannot open serial connection");
-            }
-        } else {
-            Log.w(TAG, "Could not create Usb Serial Device");
-        }
-    }
+
 
    public void killConnection(){
 	   //this.serialPort.removeEventListener();
