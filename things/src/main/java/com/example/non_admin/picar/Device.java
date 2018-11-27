@@ -39,8 +39,8 @@ import static android.support.v4.content.ContextCompat.getSystemService;
  *
  */
 public class Device{
-    private static UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE;
-    public static HashSet<UsbDevice> devSet;
+    private static UsbManager usbManager;
+    public static HashSet<Device> devSet;
     public static HashMap<String, Device> devName;
     private static final String TAG = "Device";
 
@@ -106,7 +106,7 @@ public class Device{
         };
 		try{
 			this.connect();
-			devSet.add(this.mDevice);
+			devSet.add(this);
             this.serialDevice.read(callback);//adding a callback to the connection
 			this.serialDevice.write("APIs".getBytes());
 		}catch(Exception e){
@@ -114,7 +114,50 @@ public class Device{
 		}
 	}
 
-   //deleted the .equals and .hashcode methods because I'm changing the devSet structure
+	/**
+	 * This just passes other to its appropriate equals
+	 * @param other
+	 * @return true or false
+	 */
+	@Override
+	public boolean equals(Object other){
+		if(other instanceof Device)
+			return this.equals((Device) other);
+		else if (other instanceof UsbDevice)
+			return this.equals((UsbDevice) other);
+		else
+			return super.equals(other);
+	}
+	/**
+	 * Makes the static data structures able to compare to UsbDevices. Note, you can't store
+	 * UsbDevices in the static data structures, but you can check if a Device with this UsbDevice
+	 * already exists in the static data structures.
+	 *
+	 * @param other the UsbDevice to compare to.
+	 * @return if this UsbDevice is the same device as other
+	 */
+	public boolean equals(UsbDevice other){
+		return this.mDevice.equals(other);
+	}
+	/**
+	 * Makes the static data structures able to compare to Devices.
+	 * Does this by comparing the Devices' UsbDevices'
+	 *
+	 * @param other
+	 * @return
+	 */
+	public boolean equals(Device other){
+		return this.mDevice.equals(other.getDevice());
+	}
+	/**
+	 * The hash code of the UsbDevice passed into this class.
+	 * This is necessary so the Device class's static data structures.
+	 * @return the hash code of this Device's UsbDevice
+	 */
+	@Override
+	public int hashCode() {
+		return this.mDevice.hashCode();
+	}
 
 	/**
 	 * gets the actual device
