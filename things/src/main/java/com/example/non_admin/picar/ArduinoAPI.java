@@ -8,8 +8,7 @@ public abstract class ArduinoAPI {
 	
 	/**
 	 * Creates the API object and adds it to the device.
-	 * 
-	 * @param APIname The name of the API, this is used as the PK in Device.
+	 *
 	 * @param dev The Device that this API is connected to. This is the Device the API sends over.
 	 */
 	public ArduinoAPI(Device dev) {

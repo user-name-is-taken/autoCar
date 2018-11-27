@@ -15,6 +15,8 @@ public class MSv2 extends ArduinoAPI {
 	public MSv2(Device dev) {
 		super(dev);
 		// TODO Auto-generated constructor stub
+		//examlpe:
+		new AsyncExample().execute(this);
 	}
 
 	boolean[] direction = {true, true, true, true};
@@ -26,7 +28,11 @@ public class MSv2 extends ArduinoAPI {
 	protected boolean receive(String message) {
 		// TODO Auto-generated method stub
 		Log.e("MSv2:",message);
-		return false;
+		if(message.startsWith("MSv2")){
+			return true;
+		}else{
+			return false;
+		}
 	}
 	
 	/**
