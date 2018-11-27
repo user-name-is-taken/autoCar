@@ -15,6 +15,7 @@ For use with the Adafruit Motor Shield v2
 String toWrite;
 char *usb;
 byte counter;
+const static String NAME = "motors";
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -41,6 +42,7 @@ void loop() {
      //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
      Serial.println(toWrite);//passing the pointer
    }else if(usb == "APIs"){//tells what APIs are connected
+     toWrite = "APIs_" + NAME + "_" + toWrite;
      Serial.println(toWrite);
       //you can check something else here (another API's check...)
    }

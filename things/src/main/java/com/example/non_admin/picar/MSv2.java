@@ -10,10 +10,10 @@ import android.util.Log;
  *
  * MOTORS ARE 1-4, ARRAYS ARE 0-3 ADJUST
  */
-public class MotorShield extends ArduinoAPI {
+public class MSv2 extends ArduinoAPI {
 	
-	public MotorShield(Device dev) {
-		super("MSv2", dev);
+	public MSv2(Device dev) {
+		super(dev);
 		// TODO Auto-generated constructor stub
 	}
 

@@ -53,9 +53,9 @@ public class Device{
     private static UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE;
     public static HashSet<Device> devSet;
     public static HashMap<String, Device> devName;
-
     private static final String TAG = "Device";
-	String name;
+
+	private String name;
 	private HashMap<String, ArduinoAPI> APIs;
 	// make a singleton device manager
 	private UsbDevice mDevice;
@@ -101,10 +101,14 @@ public class Device{
                 }
 */
                     //call addAPIs here
-                    for(ArduinoAPI api : APIs.values()){
-                        if(api.receive(dataUtf8))
-                            break;//the callback was for the api
-                    }
+					if(dataUtf8.startsWith("APIs"))
+						parseAPIs(dataUtf8);// remember, this is a different class
+					else {
+						for (ArduinoAPI api : APIs.values()) {
+							if (api.receive(dataUtf8))
+								break;//the callback was for the api
+						}
+					}
                 } catch (UnsupportedEncodingException e) {
                     Log.e(TAG, "Error receiving USB data", e);
                 }
@@ -114,15 +118,17 @@ public class Device{
 		try{
 			this.connect();
             this.serialDevice.read(callback);//adding a callback to the connection
+			this.serialDevice.write("APIs".getBytes());
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 	}
 
-	public static void setUsbManager(UsbManager usb){
-        usbManager = usb;
-    }
-
+	/**
+	 * This just passes other to its appropriate equals
+	 * @param other
+	 * @return true or false
+	 */
 	@Override
 	public boolean equals(Object other){
 		if(other instanceof Device)
@@ -133,20 +139,44 @@ public class Device{
 			return super.equals(other);
 	}
 
+	/**
+	 * Makes the static data structures able to compare to UsbDevices. Note, you can't store
+	 * UsbDevices in the static data structures, but you can check if a Device with this UsbDevice
+	 * already exists in the static data structures.
+	 *
+	 * @param other the UsbDevice to compare to.
+	 * @return if this UsbDevice is the same device as other
+	 */
 	public boolean equals(UsbDevice other){
 		return this.mDevice.equals(other);
 	}
 
+	/**
+	 * Makes the static data structures able to compare to Devices.
+	 * Does this by comparing the Devices' UsbDevices'
+	 *
+	 * @param other
+	 * @return
+	 */
 	public boolean equals(Device other){
 		return this.mDevice.equals(other.getDevice());
 	}
 
 
+	/**
+	 * The hash code of the UsbDevice passed into this class.
+	 * This is necessary so the Device class's static data structures.
+	 * @return the hash code of this Device's UsbDevice
+	 */
 	@Override
 	public int hashCode() {
 		return this.mDevice.hashCode();
 	}
 
+	/**
+	 * gets the actual device
+	 * @return The UsbDevice
+	 */
 	public UsbDevice getDevice(){
 		return this.mDevice;
 	}
@@ -161,10 +191,39 @@ public class Device{
 	 *  TODO: delete this?
 	 */
 	public void addAPI(String name, ArduinoAPI api){
-		APIs.put(name, api);
+		APIs.put(name, api);//maybe check if name is already in APIs?
+	}
+	/**
+	 * 	This resolves the name into a class assuming the name and the class are the same
+	 * 	MAKE SURE 'name' IN THE ARDUINO API IS THE SAME AS THIS!!!
+	 * 	Remember, when you create a ArduinoAPI it adds itself to Device's static data structures
+	 */
+	private ArduinoAPI getAPIfromName(String name){
+		try{
+			Package pkg = this.getClass().getPackage();
+			Class cls = Class.forName(pkg.getName() + name);
+			return (ArduinoAPI) cls.getConstructor(String.class, Device.class)
+					.newInstance(name, this);
+		}catch(Exception e){
+			Log.e(TAG, "getAPIfromName can't resolve name");
+			return null;
+		}
 	}
 
-	
+	/**
+	 * Takes the _ delimited message starting with "APIs" then the API name and parses out the API
+	 * names then converts the strings to ArduinoAPI objects. These objects then add themselves
+	 * to the Device class's static data structures.
+	 * @param message
+	 */
+	private void parseAPIs(String message){
+		String[] apis = message.split("_");
+		this.setName(apis[1]);//the name. remember, it starts with "APIs"
+		for(int i=2; i < apis.length; i++){
+			getAPIfromName(apis[i]);
+		}
+	}
+
 	/**
 	 * This sends data to the device
 	 * @param message the data to be sent
@@ -188,7 +247,15 @@ public class Device{
 	void setName(String name){
 		this.name = name;
 	}
-	
+
+	/**
+	 * This sets a static UsbManager for this class because the connect methods need it
+	 * @param usb The UsbManager
+	 */
+	public static void setUsbManager(UsbManager usb){
+		usbManager = usb;
+	}
+
 	/**
 	 * connects to a physical device and sets up the SerialReader reader and SerialWriter writer 
 	 * member variables. These are 

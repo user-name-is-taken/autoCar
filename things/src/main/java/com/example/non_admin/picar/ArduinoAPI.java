@@ -12,11 +12,11 @@ public abstract class ArduinoAPI {
 	 * @param APIname The name of the API, this is used as the PK in Device.
 	 * @param dev The Device that this API is connected to. This is the Device the API sends over.
 	 */
-	public ArduinoAPI(String APIname, Device dev) {
+	public ArduinoAPI(Device dev) {
 		// TODO Auto-generated constructor stub
 		super();
-		setAPIname(APIname);
-		dev.addAPI(APIname, this);
+		setAPIname();
+		dev.addAPI(this.getAPIname(), this);
 		this.dev = dev;
 	}
 
@@ -24,8 +24,8 @@ public abstract class ArduinoAPI {
 		return this.name;
 	}
 
-	private void setAPIname(String name){
-		this.name = name;
+	private void setAPIname(){
+		this.name = this.getClass().getSimpleName();
 	}
 
 	

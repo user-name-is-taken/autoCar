@@ -26,13 +26,14 @@ http://nilhcem.com/android-things/usb-communications
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Device.setUsbManager(getSystemService(Context.USB_SERVICE) as UsbManager)
+        //might want to move this somewhere where it only runs once.
 
         var device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
         if(device === null){
             Log.e(TAG, "no usb!")//change this to logging?
         }else{
             Log.d(TAG,"device found")
-            if(!Device.devSet.contains(device)) {
+            if(!Device.devSet.contains<UsbDevice?>(device)) {
                 //TODO: fix this cocntains
                 Device(device);//add to the static device in the Device constructor
             }
