@@ -45,7 +45,7 @@ http://nilhcem.com/android-things/usb-communications
 
 
     override fun onDestroy() {
-
+        Device.killAllDevs()
         super.onDestroy()
     }
 

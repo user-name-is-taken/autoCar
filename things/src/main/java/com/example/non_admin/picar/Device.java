@@ -249,4 +249,11 @@ public class Device{
 	   //this.serialPort.removeEventListener();
 	   //this.serialPort.close();
    }
+
+	/**
+	 * loops over the Map and kills all the devices using killConnection.
+	 */
+	public static void killAllDevs(){
+
+   }
 }
