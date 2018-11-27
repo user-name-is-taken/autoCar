@@ -20,31 +20,20 @@ import static android.support.v4.content.ContextCompat.getSystemService;
 //import UsbSerial;
 
 /**
+ * This is just a fancy interface to the a connected UsbDevice.
+ * - It:
+ *   - does handshaking so everyone knows who they are.
+ *   - enables writing
+ *   - has a callback on receiving that forwards messages to the appropriate interfaces.
+ *   - TODO: add a way for a sensor device to forward a command to an actuator device through the pi
+ *     - multicast groups?
+ *
  * see the following 3 links:
  *   - https://github.com/Nilhcem/usbfun-androidthings/blob/master/mobile/src/main/java/com/nilhcem/usbfun/mobile/MainActivity.java)
  *   - http://nilhcem.com/android-things/usb-communications
  *   - https://github.com/felHR85/UsbSerial
- * Classes that inherit this can write to and read from the serial port.
- * They MUST override the void receive(String) method that's called when they get input.
- * Devices must be serial devices (not parallel)
- * 
- * Code for the connection and reading and writing over RXTX is taken from the 
- * <a href="http://rxtx.qbang.org/wiki/index.php/Examples">examples on the RXTX wiki</a>.
- * 
- * More useful links:
- * 
- * - <a href="http://users.frii.com/jarvi/rxtx/doc/index.html>gnu.io docs</a>
- * - <a href="https://docs.oracle.com/cd/E17802_01/products/products/javacomm/reference/api/index.html">
- * javax.comm docs</a>
- * - <a href-"http://rxtx.qbang.org/wiki/index.php/Download">
- * download link for the RXTXcomm.jar I'm using</a>
- * - <a href="http://rxtx.qbang.org/wiki/index.php/Using_RXTX_In_Eclipse">
- * Partially complete installation in eclipse instructions</a>
- * 
- * To fully install on eclipse in linux, run `sudo apt-get install librxtx-java`
- * then, make `/usr/share/java:/usr/lib/jni` the native library location of the RXTXcomm.jar
- * when you add it to the build path
- * 
+ *
+ * Devices must be serial devices (not parallel) TODO: double check this
  *
  * @author pi
  *
@@ -61,7 +50,7 @@ public class Device{
 	private UsbDevice mDevice;
     private UsbDeviceConnection connection;
     private UsbSerialDevice serialDevice;
-    private String buffer = "";
+    private String buffer = ""; // delete this?
 
     //These store the devices
 
