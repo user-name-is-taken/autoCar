@@ -34,8 +34,7 @@ http://nilhcem.com/android-things/usb-communications
         }else{
             Log.d(TAG,"device found")
             if(!Device.devSet.contains<UsbDevice?>(device)) {
-                //TODO: fix this cocntains
-                Device(device);//add to the static device in the Device constructor
+                Device(device)//add to the static device in the Device constructor
             }
         }
 
