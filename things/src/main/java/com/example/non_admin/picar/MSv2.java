@@ -31,7 +31,12 @@ public class MSv2 extends ArduinoAPI {
 	}
 
 
-
+	/**
+	 * just a standard receive. Checks if message was meant for this API,
+	 * if so it does some stuff.
+	 * @param message The message received by the Device.
+	 * @return
+	 */
 	@Override
 	protected boolean receive(String message) {
 		// TODO Auto-generated method stub
@@ -65,7 +70,7 @@ public class MSv2 extends ArduinoAPI {
 	 * sets the direction of the motor (forward or backward)
 	 * @param direction true is forward false is backward, null is stopped
 	 */
-	public void setDirection(Boolean direction, int motor, String shield){
+	public void setDirection(Boolean direction, int motor, String shield) throws InvalidShield{
 		//validate
 		//format = ^MSv2_[67]%x_direction_[1-4]_[0-2]$
 		//convert those ints to bytes before sending
@@ -91,7 +96,7 @@ public class MSv2 extends ArduinoAPI {
 	 * @param direction
 	 * @param motor
 	 */
-	public void setDirection(Boolean direction, int motor){
+	public void setDirection(Boolean direction, int motor) throws InvalidShield{
 		setDirection(direction, motor, "60");
 	}
 	
@@ -101,7 +106,7 @@ public class MSv2 extends ArduinoAPI {
 	 * @param motor the motor you want to know the direction of
 	 * @return the direction of the this motor
 	 */
-	public boolean getDirection(int motor, String shield){
+	public boolean getDirection(int motor, String shield) throws InvalidShield{
 		return this.allShields.get(shield).getDirection(motor-1);
 	}
 
@@ -110,7 +115,7 @@ public class MSv2 extends ArduinoAPI {
 	 * @param motor
 	 * @return
 	 */
-	public boolean getDirection(int motor){
+	public boolean getDirection(int motor) throws InvalidShield{
 		getDirection(motor, "60");
 	}
 
@@ -118,7 +123,7 @@ public class MSv2 extends ArduinoAPI {
 	 * sets the speed of the motor
 	 * @param speed
 	 */
-	public void setSpeed(int speed,int motor, String shield){
+	public void setSpeed(int speed,int motor, String shield) throws InvalidShield{
 		//format = ^MSv2_[67]%x_speed_[1-4]_%x%x$
 		if(this.allShields.containsKey(shield)){
 			this.allShields.get(shield).setSpeed(motor-1, speed);
@@ -136,7 +141,7 @@ public class MSv2 extends ArduinoAPI {
 	 * @param speed
 	 * @param motor
 	 */
-	public void setSpeed(int speed,int motor){
+	public void setSpeed(int speed,int motor) throws InvalidShield{
 		setSpeed(speed, motor, "60");
 	}
 	
@@ -145,7 +150,7 @@ public class MSv2 extends ArduinoAPI {
 	 * @param motor Which motor you want to set the speed for
 	 * @return The speed of the motor
 	 */
-	public int getSpeed(int motor, String shield){
+	public int getSpeed(int motor, String shield) throws InvalidShield{
 		return this.allShields.get(shield).getSpeed(motor);
 	}
 
@@ -154,7 +159,7 @@ public class MSv2 extends ArduinoAPI {
 	 * @param motor
 	 * @return
 	 */
-	public int getSpeed(int motor){
+	public int getSpeed(int motor) throws InvalidShield{
 		return getSpeed(motor, "60");
 	}
 }
