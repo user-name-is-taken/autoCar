@@ -13,8 +13,10 @@ static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
 //make sure you send hex bytes!
 static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
 static const char API_PATTERN [] = "^APIs$";
+static const char SHIELDS_PATTERN [] = "^MSv2_shields$";
 //Android sends the API_PATTERN to the arduino to ask for this API's name.
 static const String NAME = "MSv2";
+
 
 static Adafruit_MotorShield *shields [32];
 // Initialized as all null
@@ -36,6 +38,14 @@ uint8_t substr2num(char *message, int A, int B){
   strncpy(str, message + A, B - A);
   str[B-A] = '\0';
   return strtol(str, NULL, 16);
+}
+
+/*
+ * Finds the attached shields 
+ */
+String getAttachedShields(){
+  String ret = "MSv2_shields";
+  return "hi";
 }
 
 /*
@@ -155,6 +165,8 @@ boolean checkMotorShieldMessage(char *message, String *toWrite){
         }
       //ADD OTHER STUFF (SET SERVOS...)
         // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
+      }else if(ms.Match(SHIELD_PATTERN){
+        *toWrite = getAttachedShields();
       }else{
         *toWrite = String("MotorShield: No matching command found.");
       }

@@ -28,6 +28,8 @@ void setup() {
 
 void loop() {
   if(Serial.available() > 0){
+
+    //************read from serial**************
    while(Serial.available() > 0){
       char letter = Serial.read();
       if(letter == '\n')
@@ -38,9 +40,13 @@ void loop() {
       //how can I handle this?
    }
    usb[counter] = '\0';//terminates the string (replacing the newline)
+
+   
+   //***********do stuff with the serial input****************
    if(checkMotorShieldMessage(usb, &toWrite)){
      //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
      Serial.println(toWrite);//passing the pointer
+     //NAME + "_" + I wanted to add this, but they're different types
    }else if(usb == "APIs"){//tells what APIs are connected
      toWrite = "APIs_" + NAME + "_" + toWrite;
      Serial.println(toWrite);
