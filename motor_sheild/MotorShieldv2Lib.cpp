@@ -13,7 +13,6 @@ static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
 //make sure you send hex bytes!
 static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
 static const char API_PATTERN [] = "^APIs$";
-static const char SHIELDS_PATTERN [] = "^MSv2_shields$";
 //Android sends the API_PATTERN to the arduino to ask for this API's name.
 static const String NAME = "MSv2";
 
@@ -48,6 +47,21 @@ String getAttachedShields(){
   return "hi";
 }
 
+/** 
+ * Checks if an I2C device is connected at shieldAddr. This effectively checks if a 
+ * motor shield exists at that location.
+ * 
+ * Note, this only works when everything's imported for some reason.
+ */
+boolean shieldConnected(uint8_t shieldAddr){
+  Wire.beginTransmission(shieldAddr);
+  Wire.write(1);
+  int end = Wire.endTransmission(true);
+  //shieldAddressValidator(shieldAddr);
+  Serial.println(end);
+  return end == 0;
+}
+
 /*
  * Converts the message from the Serial port to its shield's int location 
  * in the shields array.
@@ -63,14 +77,15 @@ int getMotorShield(char *message){
 // the above might help with the conversion
 
 //pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
-   char addr = substr2num(message, 5,7);//make sure this is the right length
+   uint8_t addr = substr2num(message, 5,7);//make sure this is the right length
    //MSv2_60_speed_1_10
    if(addr < 96 || addr > 127){
      return -1;
-   }
-
-   if(!shields[addr - 96]){//makes sure it's a null pointer before setting it
-    //This describes the pointer magic here:
+   }else if(!shieldConnected(addr)){
+     return -2;
+   }else if(!shields[addr - 96]){
+      //makes sure it's a null pointer before setting it
+      //This describes the pointer magic here:
       //https://stackoverflow.com/questions/5467999/c-new-pointer-from-pointer-to-pointer#5468009
       shields[addr - 96] = new Adafruit_MotorShield;
       *shields[addr - 96] = Adafruit_MotorShield(addr);
@@ -78,6 +93,7 @@ int getMotorShield(char *message){
    }
    return (int)(addr - 96);
 };
+
 
 /*
  * gets the motor, then sets the speed. Speed is between 00 (0) and FF (255)
@@ -136,7 +152,8 @@ boolean setMotorDir(char *message, Adafruit_MotorShield shield){
 boolean checkMotorShieldMessage(char *message, String *toWrite){
   MatchState ms;
   ms.Target(message);
-  Serial.println(message);
+  Serial.print(message);
+  Serial.print("\n");
   char isForShield = ms.Match(SHIELD_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
@@ -145,8 +162,12 @@ boolean checkMotorShieldMessage(char *message, String *toWrite){
     Serial.println("match");//only works on the first one?
     int shieldInt = getMotorShield(message);
     if(shieldInt < 0){
-       //set toWrite to an error message saying this isn't a valid number
-       *toWrite = String("MotorShield: That isn't a valid shield address." + String(message));
+       if(shieldInt == -1){
+         //set toWrite to an error message saying this isn't a valid number
+         *toWrite = String("MotorShield: That isn't a valid shield address. " + String(message));
+       }else if(shieldInt == -2){
+         *toWrite = String("MotorShield: Shield not attached. " + String(message)); 
+       }
     }else{
       if(ms.Match(SPEED_PATTERN) > 0){
         //parse out params
@@ -165,8 +186,6 @@ boolean checkMotorShieldMessage(char *message, String *toWrite){
         }
       //ADD OTHER STUFF (SET SERVOS...)
         // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
-      }else if(ms.Match(SHIELD_PATTERN){
-        *toWrite = getAttachedShields();
       }else{
         *toWrite = String("MotorShield: No matching command found.");
       }
