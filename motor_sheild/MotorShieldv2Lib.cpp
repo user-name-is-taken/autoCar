@@ -12,7 +12,7 @@ static const char SHIELD_PATTERN_START [] = "^MSv2_[67]%x_";
 static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
 //make sure you send hex bytes!
 static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
-static const char API_PATTERN [] = "^APIs$";
+static const char API_PATTERN [] = "^APIs";
 //Android sends the API_PATTERN to the arduino to ask for this API's name.
 static const String NAME = "MSv2";
 
@@ -185,9 +185,9 @@ boolean checkMotorShieldMessage(char *message, String *toWrite){
     if(ms.Match(API_PATTERN) > 0){
       //If this matches you still return false becasue it's not exclusively for this.
       if(toWrite->length() > 0){
-        *toWrite += "_";
+        toWrite->concat("_");
       }
-      *toWrite += String("_") + NAME;
+      toWrite->concat(NAME);
     }
     return false;
   }

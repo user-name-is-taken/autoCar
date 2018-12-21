@@ -12,7 +12,7 @@ Make sure your line separator is set to newline, not carrage return
 #include <Wire.h>
 #include "MotorShieldv2Lib.h"
 // consider including #include <Regexp.h> here because it might be used in multiple libraries.
-#include <Adafruit_MotorShield.h>
+// #include <Adafruit_MotorShield.h>
 
 String toWrite;
 char *usb;
@@ -52,15 +52,13 @@ void loop() {
    
    //***********do stuff with the serial input****************
    if(checkMotorShieldMessage(usb, &toWrite)){
-     //Serial.print("HERE");
      Serial.println(usb);
      //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
      Serial.println(toWrite);//passing the pointer
      //NAME + "_" + I wanted to add this, but they're different types
-   }else if(usb == "APIs"){//tells what APIs are connected
-     toWrite = "APIs_" + NAME + "_" + toWrite;
-     Serial.println(toWrite);
-      //you can check something else here (another API's check...)
+   }else if( strcmp(usb,"APIs") == 0 ){//tells what APIs are connected
+     Serial.println( "APIs_" + NAME + "_" + toWrite);
+     //you can check something else here (another API's check...)
    }
    counter = 0;
    /*
