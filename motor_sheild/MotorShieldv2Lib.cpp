@@ -39,14 +39,6 @@ uint8_t substr2num(char *message, int A, int B){
   return strtol(str, NULL, 16);
 }
 
-/*
- * Finds the attached shields 
- */
-String getAttachedShields(){
-  String ret = "MSv2_shields";
-  return "hi";
-}
-
 /** 
  * Checks if an I2C device is connected at shieldAddr. This effectively checks if a 
  * motor shield exists at that location.
@@ -55,10 +47,9 @@ String getAttachedShields(){
  */
 boolean shieldConnected(uint8_t shieldAddr){
   Wire.beginTransmission(shieldAddr);
-  Wire.write(1);
   int end = Wire.endTransmission(true);
-  //shieldAddressValidator(shieldAddr);
-  Serial.println(end);
+  //return shieldAddressValidator(shieldAddr); (A customization I added 
+  //to the Adafruit_MotorShield.h library that doesn't work)
   return end == 0;
 }
 
@@ -152,8 +143,7 @@ boolean setMotorDir(char *message, Adafruit_MotorShield shield){
 boolean checkMotorShieldMessage(char *message, String *toWrite){
   MatchState ms;
   ms.Target(message);
-  Serial.print(message);
-  Serial.print("\n");
+  Serial.println(message);
   char isForShield = ms.Match(SHIELD_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
@@ -164,9 +154,9 @@ boolean checkMotorShieldMessage(char *message, String *toWrite){
     if(shieldInt < 0){
        if(shieldInt == -1){
          //set toWrite to an error message saying this isn't a valid number
-         *toWrite = String("MotorShield: That isn't a valid shield address. " + String(message));
+         *toWrite = String("MotorShield: That isn't a valid shield address.");
        }else if(shieldInt == -2){
-         *toWrite = String("MotorShield: Shield not attached. " + String(message)); 
+         *toWrite = String("MotorShield: Shield not attached."); 
        }
     }else{
       if(ms.Match(SPEED_PATTERN) > 0){

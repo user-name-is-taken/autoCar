@@ -5,6 +5,8 @@ control
 
 For use with the Adafruit Motor Shield v2 
 ---->	http://www.adafruit.com/products/1438
+
+Make sure your line separator is set to newline, not carrage return
 */
 
 #include <Wire.h>
@@ -23,6 +25,7 @@ void setup() {
   toWrite = "";
   counter = 0;
   usb = new char[50];
+  Wire.begin();// super important for my motor shield library
   //char letter;
 }
 
@@ -38,12 +41,19 @@ void loop() {
       counter ++;
       //the last character is a new line, destroying my regex.
       //how can I handle this?
+      if(Serial.available() == 0){
+        delay(10);
+        //http://forum.arduino.cc/index.php?topic=22735.0
+        //this waits for the next character if is hasn't yet arrived.
+      }
    }
    usb[counter] = '\0';//terminates the string (replacing the newline)
 
    
    //***********do stuff with the serial input****************
    if(checkMotorShieldMessage(usb, &toWrite)){
+     //Serial.print("HERE");
+     Serial.println(usb);
      //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
      Serial.println(toWrite);//passing the pointer
      //NAME + "_" + I wanted to add this, but they're different types
