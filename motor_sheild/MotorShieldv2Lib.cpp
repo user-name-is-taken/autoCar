@@ -197,6 +197,11 @@ typedef void(*mover)();
  * Maybe you could use structs:
  *   https://stackoverflow.com/questions/4324763/can-we-have-functions-inside-functions
  *   https://stackoverflow.com/questions/13125944/function-for-c-struct
+ *   doesn't work.
+ * Zac Wood suggested converting a lambda to an std::function then doing magic with that
+ *   https://stackoverflow.com/questions/13238050/convert-stdbind-to-function-pointer
+ *   https://stackoverflow.com/questions/10938774/get-function-pointer-from-stdfunction-when-using-stdbind/18422878
+ *   
  */
 
 struct StepperFoo{
