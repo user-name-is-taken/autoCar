@@ -7,6 +7,10 @@
 #include <Adafruit_MotorShield.h>
 #include "MotorShieldv2Lib.h"
 
+#include <AccelStepper.h>
+#include <Adafruit_MotorShield.h>
+#include <MultiStepper.h>
+
 
 static const char SHIELD_PATTERN_START [] = "^MSv2_[67]%x_";
 static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
@@ -86,6 +90,17 @@ int getMotorShield(char *message){
 };
 
 
+
+
+
+
+
+
+
+//*************************************DC MOTORS**********************************
+
+
+
 /*
  * gets the motor, then sets the speed. Speed is between 00 (0) and FF (255)
  * 
@@ -124,6 +139,100 @@ boolean setMotorDir(char *message, Adafruit_MotorShield shield){
    }
    return true;
 }
+
+
+//************************************STEPPER MOTORS*******************************************
+
+/*
+ * Each MultiStepper can contain up to 10 objects. This class wraps MultiStepper to
+ * handle these objects
+ */
+class Steppers{
+  public:
+    Steppers();
+    void addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield);
+    unsigned char getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb);
+  protected:
+    MultiStepper steppers;
+  private:
+  //Adafruit_MotorShield addresses are uint8_t
+  //stepperNumb is uint8_T
+    uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
+    unsigned char curStepperIndex;
+};
+
+/**
+ * The initializer
+ */
+Steppers::Steppers(){
+  curStepperIndex = 0;
+  //steppersIndexes = new uint8_t[10][2];
+}
+
+/**
+ * Finds the index of stepper motor in the class's array that's on this shield,
+ * and is this stepper motor. 
+ * 
+ * Returns: the index in the array if the motor is in the array, otherwise it returns -1
+ */
+unsigned char Steppers::getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb){
+  for(int index = 0; index <= curStepperIndex; index++){
+    if(steppersIndexes[index][0] == shield 
+      && steppersIndexes[index][1] == stepperNumb){
+      return index; 
+    }
+  }
+  return -1;
+}
+
+typedef void(*mover)();
+
+/**
+ * To override https://www.airspayce.com/mikem/arduino/AccelStepper/classAccelStepper.html (AccelStepper curStepper(forwardStep, backwardStep)) you can't:
+ * 
+ * use a class's void function 
+ *  https://stackoverflow.com/questions/8865766/get-a-pointer-to-objects-member-function
+ * use lambda: 
+ *  Can't find the resource I had on this, but it had to do how captured params change the function's definition.
+ * Maybe you could use structs:
+ *   https://stackoverflow.com/questions/4324763/can-we-have-functions-inside-functions
+ *   https://stackoverflow.com/questions/13125944/function-for-c-struct
+ */
+
+struct stepperFoo{
+  Adafruit_StepperMotor me;
+  stepperFoo(Adafruit_StepperMotor myStepper): me(myStepper){}
+  void forward(){
+    me.onestep(FORWARD, DOUBLE);
+  }
+  void back(){
+    me.onestep(BACKWARD, DOUBLE);
+  }
+};
+
+void Steppers::addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield){
+  //This function will require writing a function
+  
+  Adafruit_MotorShield AFMS = shields[shield];//parsed out by getMotorShield?
+  Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
+  
+  mover forwardStep = [](){
+    myStep->onestep(FORWARD, DOUBLE);
+    //make a static array with all the Steppers then reference them from here?
+  };
+  mover backwardStep = [](){
+    myStep->onestep(BACKWARD, DOUBLE);
+  };
+  //https://arduino.stackexchange.com/questions/33789/content-is-not-captured
+  //this might not compile?
+  AccelStepper curStepper(forwardStep, backwardStep);
+  steppers.addStepper(curStepper);
+}
+
+
+
+
+//********************************MAIN********************************************
 
 /*
  * motor shield signals are of the format "MSv2_shield number_then the command_parameters"

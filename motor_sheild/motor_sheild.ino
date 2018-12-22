@@ -68,3 +68,6 @@ void loop() {
     */
  } 
 }
+
+//TODO: Add a callback when Serial data is received
+//https://playground.arduino.cc/Serial/AttachReceiveFunction
