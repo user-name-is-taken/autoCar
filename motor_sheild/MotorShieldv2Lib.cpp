@@ -199,9 +199,9 @@ typedef void(*mover)();
  *   https://stackoverflow.com/questions/13125944/function-for-c-struct
  */
 
-struct stepperFoo{
+struct StepperFoo{
+  StepperFoo(Adafruit_StepperMotor);
   Adafruit_StepperMotor me;
-  stepperFoo(Adafruit_StepperMotor myStepper): me(myStepper){}
   void forward(){
     me.onestep(FORWARD, DOUBLE);
   }
@@ -209,6 +209,7 @@ struct stepperFoo{
     me.onestep(BACKWARD, DOUBLE);
   }
 };
+StepperFoo::StepperFoo(Adafruit_StepperMotor myStepper): me(myStepper){}
 
 void Steppers::addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield){
   //This function will require writing a function
@@ -216,16 +217,10 @@ void Steppers::addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t s
   Adafruit_MotorShield AFMS = shields[shield];//parsed out by getMotorShield?
   Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
   
-  mover forwardStep = [](){
-    myStep->onestep(FORWARD, DOUBLE);
-    //make a static array with all the Steppers then reference them from here?
-  };
-  mover backwardStep = [](){
-    myStep->onestep(BACKWARD, DOUBLE);
-  };
+  StepperFoo foo = StepperFoo(*myStep);
   //https://arduino.stackexchange.com/questions/33789/content-is-not-captured
   //this might not compile?
-  AccelStepper curStepper(forwardStep, backwardStep);
+  AccelStepper curStepper(&foo.forward, &foo.back);
   steppers.addStepper(curStepper);
 }
 
