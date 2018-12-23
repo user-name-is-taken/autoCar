@@ -26,7 +26,7 @@
 class MyAccelStepper: public AccelStepper
 {
    public:
-       MyAccelStepper(Adafruit_StepperMotor myStepper):AccelStepper(0,0,0,0,0,false)
+       MyAccelStepper(Adafruit_StepperMotor *myStepper):AccelStepper(0,0,0,0,0,false)
        {
          //MyStepper(0, 0, 0, 0, 0, false);
          _myStepper = myStepper;
@@ -35,13 +35,13 @@ class MyAccelStepper: public AccelStepper
        void step0(long step){
           (void)(step);
           if(speed() > 0){
-            _myStepper.onestep(FORWARD, DOUBLE);
+            _myStepper->onestep(FORWARD, DOUBLE);
           }else{
-            _myStepper.onestep(BACKWARD, DOUBLE);            
+            _myStepper->onestep(BACKWARD, DOUBLE);            
           }
        }
     private:
-       Adafruit_StepperMotor _myStepper;
+       Adafruit_StepperMotor *_myStepper;
 };
 
 /*
@@ -72,26 +72,10 @@ Adafruit_MotorShield AFMStop(0x60); // Default address, no jumpers
 Adafruit_StepperMotor *myStepper1 = AFMStop.getStepper(200, 1);
 Adafruit_StepperMotor *myStepper2 = AFMStop.getStepper(200, 2);
 
-// you can change these to DOUBLE or INTERLEAVE or MICROSTEP!
-// wrappers for the first motor!
-void forwardstep1() {  
-  myStepper1->onestep(FORWARD, DOUBLE);
-  //DOUBLE is the high torque
-}
-void backwardstep1() {  
-  myStepper1->onestep(BACKWARD, DOUBLE);
-}
-// wrappers for the second motor!
-void forwardstep2() {  
-  myStepper2->onestep(FORWARD, DOUBLE);
-}
-void backwardstep2() {  
-  myStepper2->onestep(BACKWARD, DOUBLE);
-}
 
 // Now we'll wrap the 3 steppers in an AccelStepper object
-AccelStepper stepper1(forwardstep1, backwardstep1);
-AccelStepper stepper2(forwardstep2, backwardstep2);
+MyAccelStepper stepper1(myStepper1);
+MyAccelStepper stepper2(myStepper2);
 
 MultiStepper steppers;
 
