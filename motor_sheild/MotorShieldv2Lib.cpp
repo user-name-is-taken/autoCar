@@ -196,8 +196,8 @@ typedef void(*mover)();
  *   https://stackoverflow.com/questions/13238050/convert-stdbind-to-function-pointer
  *   https://stackoverflow.com/questions/10938774/get-function-pointer-from-stdfunction-when-using-stdbind/18422878
  *   This requires importing iostream (find a way)
- */
-template <class f>
+ 
+template <class F>
 auto lambda_to_ptr(F&& f){
   static F fn = std::forward<F>(f);
   return []{
@@ -205,17 +205,24 @@ auto lambda_to_ptr(F&& f){
   }
 }
 
+Research static parameters to see if they can be named dynamically
+*/
+
 
 void Steppers::addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield){
   //This function will require writing a function
   
   Adafruit_MotorShield AFMS = shields[shield];//parsed out by getMotorShield?
-  Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
-  
-  StepperFoo foo = StepperFoo(*myStep);
+  static Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
+  mover forward = []{
+    myStep->onestep(FORWARD, DOUBLE);
+  };
+  mover back = []{
+    myStep->onestep(BACKWARD, DOUBLE);
+  };
   //https://arduino.stackexchange.com/questions/33789/content-is-not-captured
   //this might not compile?
-  AccelStepper curStepper(&foo.forward, &foo.back);
+  AccelStepper curStepper(forward, back);
   steppers.addStepper(curStepper);
 }
 
