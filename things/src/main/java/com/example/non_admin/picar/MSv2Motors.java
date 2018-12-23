@@ -19,10 +19,10 @@ import static android.content.ContentValues.TAG;
  *
  * MOTORS ARE 1-4, ARRAYS ARE 0-3 ADJUST
  */
-public class MSv2 extends ArduinoAPI {
+public class MSv2Motors extends ArduinoAPI {
 	static HashMap<String, Shield> allShields;
 
-	public MSv2(Device dev) {
+	public MSv2Motors(Device dev) {
 		super(dev);
 		// TODO Auto-generated constructor stub
 		// TODO: validate I2C addressing (parse from handshake? request?)
@@ -41,7 +41,7 @@ public class MSv2 extends ArduinoAPI {
 	protected boolean receive(String message) {
 		// TODO Auto-generated method stub
 		Log.d(TAG,message);
-		if(message.startsWith("MSv2")){
+		if(message.startsWith("MSv2Motors")){
 			if(	this.attachedShieldsReceive(message) ){
 				Log.v(TAG, "shields set");
 			}
@@ -51,8 +51,13 @@ public class MSv2 extends ArduinoAPI {
 		}
 	}
 
+	/**
+	 * Change this? It already returns an error if the shield isn't connected.
+	 * @param message
+	 * @return
+	 */
 	private boolean attachedShieldsReceive(String message){
-		Pattern pattern = Pattern.compile("^MSv2_shields(_[67]%x)*$");
+		Pattern pattern = Pattern.compile("^MSv2Motors_shields(_[67]%x)*$");
 		Matcher m  = pattern.matcher(message);
 		if (m.matches()){
 			//parse out the valid shield addresses
