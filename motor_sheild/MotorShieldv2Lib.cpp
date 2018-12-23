@@ -188,19 +188,22 @@ unsigned char Steppers::getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb
 typedef void(*mover)();
 
 /**
- * To override https://www.airspayce.com/mikem/arduino/AccelStepper/classAccelStepper.html (AccelStepper curStepper(forwardStep, backwardStep)) you can't:
+ * Converts a lambda to a pointer to a function so you can use 
+ * AccelStepper(void(*forward)(), void(*backward)())
+ * https://www.airspayce.com/mikem/arduino/AccelStepper/classAccelStepper.html 
  * 
- * use a class's void function 
- *  https://stackoverflow.com/questions/8865766/get-a-pointer-to-objects-member-function
- * use lambda: 
- *  Can't find the resource I had on this, but it had to do how captured params change the function's definition.
- * Maybe you could use structs:
- *   https://stackoverflow.com/questions/4324763/can-we-have-functions-inside-functions
- *   https://stackoverflow.com/questions/13125944/function-for-c-struct
- *   doesn't work.
  * Zac Wood suggested converting a lambda to an std::function then doing magic with that
  *   https://stackoverflow.com/questions/13238050/convert-stdbind-to-function-pointer
  *   https://stackoverflow.com/questions/10938774/get-function-pointer-from-stdfunction-when-using-stdbind/18422878
+
+ *   This requires importing iostream (find a way)
+ 
+template <class F>
+auto lambda_to_ptr(F&& f){
+  static F fn = std::forward<F>(f);
+  return []{
+    return fn();
+
  *   https://stackoverflow.com/questions/7852101/c-lambda-with-captures-as-a-function-pointer/48368508#48368508
  * 
  * Other Zac Wood expansions:
@@ -216,20 +219,28 @@ struct StepperFoo{
   }
   void back(){
     me.onestep(BACKWARD, DOUBLE);
+
   }
-};
-StepperFoo::StepperFoo(Adafruit_StepperMotor myStepper): me(myStepper){}
+}
+
+Research static parameters to see if they can be named dynamically
+*/
+
 
 void Steppers::addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield){
   //This function will require writing a function
   
   Adafruit_MotorShield AFMS = shields[shield];//parsed out by getMotorShield?
-  Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
-  
-  StepperFoo foo = StepperFoo(*myStep);
+  static Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
+  mover forward = []{
+    myStep->onestep(FORWARD, DOUBLE);
+  };
+  mover back = []{
+    myStep->onestep(BACKWARD, DOUBLE);
+  };
   //https://arduino.stackexchange.com/questions/33789/content-is-not-captured
   //this might not compile?
-  AccelStepper curStepper(&foo.forward, &foo.back);
+  AccelStepper curStepper(forward, back);
   steppers.addStepper(curStepper);
 }
 
