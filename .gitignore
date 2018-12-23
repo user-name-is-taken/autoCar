@@ -295,3 +295,10 @@ hs_err_pid*
 
 
 # End of https://www.gitignore.io/api/java,linux,eclipse
+learner/MainLearner.java
+learner/TestClass.java
+.gradle/4.4/fileHashes/fileHashes.bin
+.gradle/4.4/fileHashes/fileHashes.lock
+.gradle/4.4/taskHistory/taskHistory.lock
+.gradle/buildOutputCleanup/buildOutputCleanup.lock
+gradlew.bat
