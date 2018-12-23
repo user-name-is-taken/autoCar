@@ -1,142 +1,21 @@
-#include <Regexp.h>
-//from here: https://github.com/nickgammon/Regexp installed in computer's Arduino library, so you'll have to do this
-
-// https://www.youtube.com/watch?v=fE3Dw0slhIc - arduino libraries
+#include "MSv2Common.h"
 #include <Wire.h> 
 // the serial library?
+#include <Regexp.h>
 #include <Adafruit_MotorShield.h>
-#include "MotorShieldv2Lib.h"
+#include "MSv2Steppers.h"
 
 #include <AccelStepper.h>
-#include <Adafruit_MotorShield.h>
 #include <MultiStepper.h>
 
 
-static const char SHIELD_PATTERN_START [] = "^MSv2_[67]%x_";
-static const char SPEED_PATTERN [] = "^MSv2_[67]%x_speed_[1-4]_%x%x$";
+static const char SHIELD_PATTERN_START [] = "^MSv2Steppers_";
+static const char SPEED_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_%x%x$";
 //make sure you send hex bytes!
-static const char DIR_PATTERN [] = "^MSv2_[67]%x_direction_[1-4]_[0-2]$";
-static const char API_PATTERN [] = "^APIs";
-//Android sends the API_PATTERN to the arduino to ask for this API's name.
-static const String NAME = "MSv2";
+static const char DIR_PATTERN [] = "^MSv2Steppers_[67]%x_absMove_[0-1]_[0-2]$";
+static const char DIR_PATTERN [] = "^MSv2Steppers_execute$";
 
-
-static Adafruit_MotorShield *shields [32];
-// Initialized as all null
-//https://stackoverflow.com/questions/2615071/c-how-do-you-set-an-array-of-pointers-to-null-in-an-initialiser-list-like-way
-  // the above link described this initialization
-  // shields holds pointer to the shield objects.
-  // shields are addressed 0x60 to 0x7F for a total of 32 unique addresses.
-  // In this array, [0] == address 0x60, [31] == address 0x7F
-
-/*
- * converts a substring between A and B from message to a uint8_t
- * 
- * http://www.cplusplus.com/reference/cstring/strncpy/
- * 
- * Tested, it works
- */
-uint8_t substr2num(char *message, int A, int B){
-  char str[(B - A) + 1];
-  strncpy(str, message + A, B - A);
-  str[B-A] = '\0';
-  return strtol(str, NULL, 16);
-}
-
-/** 
- * Checks if an I2C device is connected at shieldAddr. This effectively checks if a 
- * motor shield exists at that location.
- * 
- * Note, this only works when everything's imported for some reason.
- */
-boolean shieldConnected(uint8_t shieldAddr){
-  Wire.beginTransmission(shieldAddr);
-  int end = Wire.endTransmission(true);
-  //return shieldAddressValidator(shieldAddr); (A customization I added 
-  //to the Adafruit_MotorShield.h library that doesn't work)
-  return end == 0;
-}
-
-/*
- * Converts the message from the Serial port to its shield's int location 
- * in the shields array.
- * 
- * If a motor shield doesn't exist, it creates it before returning the int
- * 
- * Note: 0x70 is the broadcast
- * 
- * //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
- */
-int getMotorShield(char *message){
-// * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
-// the above might help with the conversion
-
-//pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
-   uint8_t addr = substr2num(message, 5,7);//make sure this is the right length
-   //MSv2_60_speed_1_10
-   if(addr < 96 || addr > 127){
-     return -1;
-   }else if(!shieldConnected(addr)){
-     return -2;
-   }else if(!shields[addr - 96]){
-      //makes sure it's a null pointer before setting it
-      //This describes the pointer magic here:
-      //https://stackoverflow.com/questions/5467999/c-new-pointer-from-pointer-to-pointer#5468009
-      shields[addr - 96] = new Adafruit_MotorShield;
-      *shields[addr - 96] = Adafruit_MotorShield(addr);
-      shields[addr - 96]->begin();
-   }
-   return (int)(addr - 96);
-};
-
-
-
-
-
-
-//*************************************DC MOTORS**********************************
-
-
-
-/*
- * gets the motor, then sets the speed. Speed is between 00 (0) and FF (255)
- * 
- * pattern: ^MSv2_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$
- *   - example: MSv2_60_speed_1_10
- */
-boolean setMotorSpeed(char *message, Adafruit_MotorShield shield){
-   uint8_t motorAddr = substr2num(message, 14, 15);//make sure this is the right length
-
-   uint8_t intSpeed = substr2num(message, 16, 18);//make sure this is the right length
-   
-   shield.getMotor(motorAddr)->setSpeed(intSpeed);
-   
-   return true;
-}
-
-/*
- * gets the motor, then sets the direction
- * 
- * see here: https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/library-reference#void-run-uint8-t-9-7
- * 
- * DIR_PATTERN: ^MSv2_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$
- *   - example: MSv2_60_direction_1_1
- */
-boolean setMotorDir(char *message, Adafruit_MotorShield shield){
-   uint8_t motorAddr = substr2num(message, 18,19);//make sure this is the right length
-   
-   if(message[20] == '0'){
-     shield.getMotor(motorAddr)->run(RELEASE); 
-   }else if (message[20] == '1'){
-     shield.getMotor(motorAddr)->run(FORWARD);
-   }else if (message[20] == '2'){
-     shield.getMotor(motorAddr)->run(BACKWARD);
-   }else{
-    return false;
-   }
-   return true;
-}
-
+static const String NAME = "MSv2Steppers";
 
 //************************************STEPPER MOTORS*******************************************
 
@@ -329,9 +208,6 @@ class Steppers: public MultiStepper{
 };
 
 
-
-
-
 //********************************MAIN********************************************
 
 /*
@@ -349,7 +225,7 @@ class Steppers: public MultiStepper{
  *   Remember, you NEED to de-reference toWrite with this: https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
  
 */
-boolean checkMotorShieldMessage(char *message, String *toWrite){
+boolean checkMSv2Steppers(char *message, String *toWrite){
   MatchState ms;
   ms.Target(message);
   Serial.println(message);
@@ -371,13 +247,16 @@ boolean checkMotorShieldMessage(char *message, String *toWrite){
       if(ms.Match(SPEED_PATTERN) > 0){
         //parse out params
         //set speed on the shield
+        /*
         if(setMotorSpeed(message, *shields[shieldInt])){
           *toWrite = String("MotorShield: speed set success.");  
         }else{
           *toWrite = String("MotorShield: speed set fail.");
         }
+        */
       }else if(ms.Match(DIR_PATTERN) > 0){
         //set direction
+        /*
         if(setMotorDir(message, *shields[shieldInt])){
           *toWrite = String("MotorShield: direction set success.");
         }else{
@@ -385,6 +264,7 @@ boolean checkMotorShieldMessage(char *message, String *toWrite){
         }
       //ADD OTHER STUFF (SET SERVOS...)
         // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
+        */
       }else{
         *toWrite = String("MotorShield: No matching command found.");
       }
