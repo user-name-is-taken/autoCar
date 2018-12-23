@@ -20,6 +20,35 @@
 #include <Adafruit_MotorShield.h>
 #include <MultiStepper.h>
 
+/**
+ * You have to override step0
+ */
+class MyAccelStepper: public AccelStepper
+{
+   public:
+       MyAccelStepper(Adafruit_StepperMotor myStepper):AccelStepper(0,0,0,0,0,false)
+       {
+         //MyStepper(0, 0, 0, 0, 0, false);
+         _myStepper = myStepper;
+       }
+   protected:
+       void step0(long step){
+          (void)(step);
+          if(speed() > 0){
+            _myStepper.onestep(FORWARD, DOUBLE);
+          }else{
+            _myStepper.onestep(BACKWARD, DOUBLE);            
+          }
+       }
+    private:
+       Adafruit_StepperMotor _myStepper;
+};
+
+/*
+#include <ArduinoSTL.h>
+
+using namespace std;
+
 class Steppers{
   public:
     void addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield);
@@ -34,7 +63,7 @@ class Steppers{
 void Steppers::addStepper(uint16 steps_per_rev, uint8_t stepperNumb, uint8_t shield){
   
 }
-
+*/
 Adafruit_MotorShield AFMSbot(0x61); // Rightmost jumper closed
 Adafruit_MotorShield AFMStop(0x60); // Default address, no jumpers
 
