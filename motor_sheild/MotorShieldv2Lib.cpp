@@ -195,6 +195,7 @@ typedef void(*mover)();
  * Zac Wood suggested converting a lambda to an std::function then doing magic with that
  *   https://stackoverflow.com/questions/13238050/convert-stdbind-to-function-pointer
  *   https://stackoverflow.com/questions/10938774/get-function-pointer-from-stdfunction-when-using-stdbind/18422878
+
  *   This requires importing iostream (find a way)
  
 template <class F>
@@ -202,6 +203,23 @@ auto lambda_to_ptr(F&& f){
   static F fn = std::forward<F>(f);
   return []{
     return fn();
+
+ *   https://stackoverflow.com/questions/7852101/c-lambda-with-captures-as-a-function-pointer/48368508#48368508
+ * 
+ * Other Zac Wood expansions:
+ *  https://stackoverflow.com/questions/7852101/c-lambda-with-captures-as-a-function-pointer/48368508#48368508
+ *  
+ */
+
+struct StepperFoo{
+  StepperFoo(Adafruit_StepperMotor);
+  Adafruit_StepperMotor me;
+  void forward(){
+    me.onestep(FORWARD, DOUBLE);
+  }
+  void back(){
+    me.onestep(BACKWARD, DOUBLE);
+
   }
 }
 
