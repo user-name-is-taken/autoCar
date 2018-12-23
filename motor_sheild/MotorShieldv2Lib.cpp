@@ -94,9 +94,6 @@ int getMotorShield(char *message){
 
 
 
-
-
-
 //*************************************DC MOTORS**********************************
 
 
@@ -143,15 +140,73 @@ boolean setMotorDir(char *message, Adafruit_MotorShield shield){
 
 //************************************STEPPER MOTORS*******************************************
 
+
+/**
+ * A customized AccelStepper that takes an Adafruit_StepperMotor.
+ * 
+ */
+class MyAccelStepper: public AccelStepper
+{
+   public:
+       MyAccelStepper(Adafruit_StepperMotor *myStepper):AccelStepper(0,0,0,0,0,false)
+       {
+         //MyStepper(0, 0, 0, 0, 0, false);
+         _myStepper = myStepper;
+       }
+   protected:
+       void step0(long step) override{
+          if(_myStepper == NULL){
+            AccelStepper::step0(step);
+          }else{
+            (void)(step);
+            if(speed() > 0){
+              _myStepper->onestep(FORWARD, DOUBLE);
+            }else{
+              _myStepper->onestep(BACKWARD, DOUBLE);            
+            }          
+          }
+       }
+    private:
+       Adafruit_StepperMotor *_myStepper;
+};
+
+
 /*
  * Each MultiStepper can contain up to 10 objects. This class wraps MultiStepper to
  * handle these objects
  */
 class Steppers{
   public:
-    Steppers();
-    void addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield);
-    unsigned char getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb);
+    Steppers(){
+      curStepperIndex = 0;
+    }
+    void addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield){
+        //This function will require writing a function
+  
+      Adafruit_MotorShield AFMS = shields[shield];//parsed out by getMotorShield?
+      static Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
+      
+      //https://arduino.stackexchange.com/questions/33789/content-is-not-captured
+      //this might not compile?
+      MyAccelStepper curStepper(myStep);
+      steppers.addStepper(curStepper);
+    }
+
+    /**
+     * Finds the index of stepper motor in the class's array that's on this shield,
+     * and is this stepper motor. 
+     * 
+     * Returns: the index in the array if the motor is in the array, otherwise it returns -1
+    */
+    unsigned char getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb){
+      for(int index = 0; index <= curStepperIndex; index++){
+        if(steppersIndexes[index][0] == shield 
+          && steppersIndexes[index][1] == stepperNumb){
+          return index; 
+        }
+      }
+      return -1;
+    }
   protected:
     MultiStepper steppers;
   private:
@@ -161,88 +216,9 @@ class Steppers{
     unsigned char curStepperIndex;
 };
 
-/**
- * The initializer
- */
-Steppers::Steppers(){
-  curStepperIndex = 0;
-  //steppersIndexes = new uint8_t[10][2];
-}
-
-/**
- * Finds the index of stepper motor in the class's array that's on this shield,
- * and is this stepper motor. 
- * 
- * Returns: the index in the array if the motor is in the array, otherwise it returns -1
- */
-unsigned char Steppers::getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb){
-  for(int index = 0; index <= curStepperIndex; index++){
-    if(steppersIndexes[index][0] == shield 
-      && steppersIndexes[index][1] == stepperNumb){
-      return index; 
-    }
-  }
-  return -1;
-}
-
-typedef void(*mover)();
-
-/**
- * Converts a lambda to a pointer to a function so you can use 
- * AccelStepper(void(*forward)(), void(*backward)())
- * https://www.airspayce.com/mikem/arduino/AccelStepper/classAccelStepper.html 
- * 
- * Zac Wood suggested converting a lambda to an std::function then doing magic with that
- *   https://stackoverflow.com/questions/13238050/convert-stdbind-to-function-pointer
- *   https://stackoverflow.com/questions/10938774/get-function-pointer-from-stdfunction-when-using-stdbind/18422878
-
- *   This requires importing iostream (find a way)
- 
-template <class F>
-auto lambda_to_ptr(F&& f){
-  static F fn = std::forward<F>(f);
-  return []{
-    return fn();
-
- *   https://stackoverflow.com/questions/7852101/c-lambda-with-captures-as-a-function-pointer/48368508#48368508
- * 
- * Other Zac Wood expansions:
- *  https://stackoverflow.com/questions/7852101/c-lambda-with-captures-as-a-function-pointer/48368508#48368508
- *  
- */
-
-struct StepperFoo{
-  StepperFoo(Adafruit_StepperMotor);
-  Adafruit_StepperMotor me;
-  void forward(){
-    me.onestep(FORWARD, DOUBLE);
-  }
-  void back(){
-    me.onestep(BACKWARD, DOUBLE);
-
-  }
-}
-
-Research static parameters to see if they can be named dynamically
-*/
 
 
-void Steppers::addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield){
-  //This function will require writing a function
-  
-  Adafruit_MotorShield AFMS = shields[shield];//parsed out by getMotorShield?
-  static Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
-  mover forward = []{
-    myStep->onestep(FORWARD, DOUBLE);
-  };
-  mover back = []{
-    myStep->onestep(BACKWARD, DOUBLE);
-  };
-  //https://arduino.stackexchange.com/questions/33789/content-is-not-captured
-  //this might not compile?
-  AccelStepper curStepper(forward, back);
-  steppers.addStepper(curStepper);
-}
+
 
 
 
