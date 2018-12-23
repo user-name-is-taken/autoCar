@@ -1,5 +1,5 @@
-#ifndef MotorShieldv2lib
-#define MotorShieldv2lib
+#ifndef MSv2Motors
+#define MSv2Motors
 
 #if (ARDUINO >=100)
   #include <Arduino.h>
@@ -22,6 +22,6 @@ using namespace std;
  *   - the message was received from the stream
  *   - The stream will send a message back if it has to (error code...)
  */
-boolean checkMotorShieldMessage(char *message, String *toWrite);
+boolean checkMSv2Motors(char *message, String *toWrite);
 
 #endif
