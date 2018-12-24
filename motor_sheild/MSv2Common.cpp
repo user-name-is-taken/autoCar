@@ -24,6 +24,7 @@ Adafruit_MotorShield *shields [32];
  * Converts at most 2 hex characters from (including) A to (not including) B to a uint8_t.
  * aka [A,B) -> uint8_t
  * https://en.wikipedia.org/wiki/Bracket_(mathematics)
+ * This works the same as python [A:B]
  */
 uint8_t substr2num(char *message, int A, int B){
   char str[(B - A) + 1];
@@ -56,16 +57,16 @@ boolean shieldConnected(uint8_t shieldAddr){
  * 
  * //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
  */
-int getMotorShield(char *message){
+uint8_t getMotorShield(char *message){
 // * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
 // the above might help with the conversion
 
 //pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
 //strchr: http://www.cplusplus.com/reference/cstring/strchr/
   //(int) "_" to make the implicit promotion explicit
-   char *first = strchr(message, (int) "_");
-   char *second = strchr( first + 1, (int) "_");
-   uint8_t addr = substr2num(message, first - message , second - message);//make sure this is the right length
+   char *first = strchr(message, (int) '_');
+   char *second = strchr( first + 1, (int) '_');
+   uint8_t addr = substr2num(message, first + 1 - message , second - message);//make sure this is the right length
    //API_SHIELD_COMMAND...
    if(addr < 96 || addr > 127){
      return -1;
@@ -79,5 +80,5 @@ int getMotorShield(char *message){
       *shields[addr - 96] = Adafruit_MotorShield(addr);
       shields[addr - 96]->begin();
    }
-   return (int)(addr - 96);
+   return (uint8_t)(addr - 96);
 };

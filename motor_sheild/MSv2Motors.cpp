@@ -28,16 +28,13 @@ static const String NAME = "MSv2Motors";
 /*
  * gets the motor, then sets the speed. Speed is between 00 (0) and FF (255)
  * 
- * pattern: ^MSv2_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$
- *   - example: MSv2_60_speed_1_10
+ * pattern: ^MSv2Motors_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$
+ *   - example: MSv2Motors_60_speed_1_10
  */
 boolean setMotorSpeed(char *message, Adafruit_MotorShield shield){
-   uint8_t motorAddr = substr2num(message, 14, 15);//make sure this is the right length
-
-   uint8_t intSpeed = substr2num(message, 16, 18);//make sure this is the right length
-   
+   uint8_t motorAddr = message[20] -'0';//make sure this is the right length
+   uint8_t intSpeed = substr2num(message, 22, 24);//make sure this is the right length
    shield.getMotor(motorAddr)->setSpeed(intSpeed);
-   
    return true;
 };
 
@@ -46,20 +43,23 @@ boolean setMotorSpeed(char *message, Adafruit_MotorShield shield){
  * 
  * see here: https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/library-reference#void-run-uint8-t-9-7
  * 
- * DIR_PATTERN: ^MSv2_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$
- *   - example: MSv2_60_direction_1_1
+ * DIR_PATTERN: ^MSv2Motors_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$
+ *   - example: MSv2Motors_60_direction_1_1
  */
 boolean setMotorDir(char *message, Adafruit_MotorShield shield){
-   uint8_t motorAddr = substr2num(message, 18,19);//make sure this is the right length
-   
-   if(message[20] == '0'){
-     shield.getMotor(motorAddr)->run(RELEASE); 
-   }else if (message[20] == '1'){
-     shield.getMotor(motorAddr)->run(FORWARD);
-   }else if (message[20] == '2'){
-     shield.getMotor(motorAddr)->run(BACKWARD);
-   }else{
-    return false;
+   uint8_t motorAddr = message[24] - '0';
+   switch(message[26]){
+     case '0':
+          shield.getMotor(motorAddr)->run(RELEASE); 
+          break;
+     case '1':
+          shield.getMotor(motorAddr)->run(FORWARD);     
+          break;
+     case '2':
+          shield.getMotor(motorAddr)->run(BACKWARD);
+          break;
+     default:
+          return false;
    }
    return true;
 }

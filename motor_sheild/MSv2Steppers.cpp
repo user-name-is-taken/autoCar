@@ -13,10 +13,11 @@
 //maybe add a group of motors? You can only have 10 at a time.
 
 static const char STEPPER_PATTERN_START [] = "^MSv2Steppers_";
-static const char MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_%x%x%x_group_[0-9]{0,2}$";
+static const char MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_[+-]"
+                                    "%x%x%x_group_%x%x$";
 //The end matches longs https://stackoverflow.com/questions/11243204/how-to-match-a-long-with-java-regex
 
-static const char EXE_PATTERN [] = "^MSv2Steppers_execute_group_[0-9]{0,2}$";
+static const char EXE_PATTERN [] = "^MSv2Steppers_execute_group_%x%x$";
 
 static const String NAME = "MSv2Steppers";
 
@@ -76,10 +77,12 @@ class Steppers: public MultiStepper{
         //error, too many shields
       }else if(stepperNumb != 0 and stepperNumb!=1){
          //Invalid Stepper motor
-      }else if(!shieldConnected(shield)){
-         // shield not connected.
       }else if(getSavedStepperIndex(shield, stepperNumb) != -1){
-        //error, shield already added
+         //stepper already added.
+         //This will happen in most cases.
+      }else if(!shieldConnected(shield)){
+        // shield not connected.
+         //this is actually redundant in the current form.
       }else{  
         Adafruit_MotorShield AFMS = *shields[shield];//parsed out by getMotorShield?
         static Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
@@ -205,16 +208,13 @@ Steppers *groups[16];
 boolean checkMSv2Steppers(char *message, String *toWrite){
   MatchState ms;
   ms.Target(message);
-  Serial.println(message);
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
   if(ms.Match(STEPPER_PATTERN_START) > 0){
-    //parse out which shield, set it as a variable
-    Serial.println("match");//only works on the first one?
+    Serial.println("match");
     if(ms.Match(MOVE_PATTERN) > 0){
       int shieldInt = getMotorShield(message);
-      //parse out params
-      if(shieldInt < 0){
+      if(shieldInt < 0){//error
         if(shieldInt == -1){
           //set toWrite to an error message saying this isn't a valid number
           *toWrite = String(NAME + ": That isn't a valid shield address.");
@@ -223,7 +223,7 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
         }else{
           //unknown error
         }
-      }else{
+      }else{//shield connected.
         /**
          * Parameters: char *message, [uint8_t stepperNumb, long moveAmount, int group]
          * returns nothing, but overwrites the above parameters with the parsed crap
@@ -231,31 +231,32 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
          * parsing: "^MSv2Steppers_[67]%x_move_[0-1]_[\-\+]%x%x%x_group_%x%x$" - total len = 35
          */
         uint8_t group = substr2num(message, 34, 36);
-        if(group < 16){       
-          uint8_t stepperNumb = message[22] - 48; //48 is '0'.
-          //TODO: change from substr2num. it returns a uint8_t, which is too
+        if(group < 16){//group isn't too large.
+          uint8_t stepperNumb = message[22] - '0'; //conversion to number
+          //Multiplying by 256 here because substr2num can only handle 2 digits at a time
           long moveAmount = (substr2num(message, 24, 25) * 256) + substr2num(message, 25, 27);
           //24 in the neg or positive.
           //' for char, " for strings!!!
           //https://stackoverflow.com/questions/7808405/comparing-a-char-to-a-const-char
-          if(*(message+23) == '-')
+          if(message[23] == '-')
             moveAmount *= -1;
-          
           if(groups[group] == NULL){
             groups[group] = new Steppers();
           }
-          groups[group]->addStepper(stepperNumb, shieldInt);// Add some error checking here...
+          groups[group]->addStepper(stepperNumb, shieldInt);
+          //Adds the stepper if it doesn't exist.
           groups[group]->setToMove(shieldInt, stepperNumb, moveAmount);
-        }else{
+          //Move all the stepper motors the required amount.
+        }else{//group too large for the groups array
           *toWrite = String(NAME + ": for memory purposes, only 16 groups allowed (0-15). "
                                     "An extra byte char is possible in the pattern for future expansion"
                                     "but for now don't use it.");
-          return true;//kick out of this, because we have an error.
+          //return true;//kick out of this, because we have an error.
         }
       }
     }else if(ms.Match(EXE_PATTERN) > 0){
       //call run
-      groups[substr2num(message, 26, 29)]->moveTo();
+      groups[substr2num(message, 27, 29)]->moveTo();
       *toWrite = String(NAME + ": Move success");
     }else{
       *toWrite = String(NAME + ": No matching command found.");

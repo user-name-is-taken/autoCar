@@ -33,6 +33,6 @@ uint8_t substr2num(char *message, int A, int B);
  */
 boolean shieldConnected(uint8_t shieldAddr);
 
-int getMotorShield(char *message);
+uint8_t getMotorShield(char *message);
 
 #endif
