@@ -17,7 +17,7 @@ static const char MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_-?\\d{1,19}
 //The end matches longs https://stackoverflow.com/questions/11243204/how-to-match-a-long-with-java-regex
 
 //move to an absolute possition
-static const char ABS_MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_absMove_[0-1]_-?\\d{1,19}$";
+//static const char ABS_MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_absMove_[0-1]_-?\\d{1,19}$";
 
 static const char EXE_PATTERN [] = "^MSv2Steppers_execute$";
 
@@ -164,6 +164,17 @@ class Steppers: public MultiStepper{
        }
      }
 
+
+     
+  private:
+  //Adafruit_MotorShield addresses are uint8_t
+  //stepperNumb is uint8_T
+    uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
+    unsigned char curStepperIndex;
+    long positions [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
+    Adafruit_StepperMotor stepperObjects [10];//replace positions with this so you can have overlapping groups
+
+
     /**
      * Sets the positon array after finding the motor. Creates the motor if it doesn't
      * exist.
@@ -190,15 +201,6 @@ class Steppers: public MultiStepper{
           //error, indexOutOfBounds
        }
      }
-
-     
-  private:
-  //Adafruit_MotorShield addresses are uint8_t
-  //stepperNumb is uint8_T
-    uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
-    unsigned char curStepperIndex;
-    long positions [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
-    Adafruit_StepperMotor stepperObjects [10];//replace positions with this so you can have overlapping groups
     
     /**
      * This will add a long[] array to the free store (heap). You MUST delete it with _____.
@@ -242,40 +244,25 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
   if(isForStepper > 0){
     //parse out which shield, set it as a variable
     Serial.println("match");//only works on the first one?
-    int shieldInt = getMotorShield(message);
-    if(shieldInt < 0){
-       if(shieldInt == -1){
-         //set toWrite to an error message saying this isn't a valid number
-         *toWrite = String("MotorShield: That isn't a valid shield address.");
-       }else if(shieldInt == -2){
-         *toWrite = String("MotorShield: Shield not attached."); 
-       }
-    }else{
-      if(ms.Match(MOVE_PATTERN) > 0){
-        //parse out params
-        //set speed on the shield
-        /*
-        if(setMotorSpeed(message, *shields[shieldInt])){
-          *toWrite = String("MotorShield: speed set success.");  
-        }else{
-          *toWrite = String("MotorShield: speed set fail.");
+    
+    
+    if(ms.Match(MOVE_PATTERN) > 0){
+      int shieldInt = getMotorShield(message);
+      //parse out params
+      if(shieldInt < 0){
+        if(shieldInt == -1){
+          //set toWrite to an error message saying this isn't a valid number
+          *toWrite = String(NAME + ": That isn't a valid shield address.");
+        }else if(shieldInt == -2){
+          *toWrite = String(NAME + ": Shield not attached."); 
         }
-        */
-      }else if(ms.Match(ABS_MOVE_PATTERN) > 0){
-        //set an absolute position to move to
-        /*
-        if(setMotorDir(message, *shields[shieldInt])){
-          *toWrite = String("MSv2Stepper: direction set success.");
-        }else{
-          *toWrite = String("MotorShield: direction set failed.");
-        }
-        */
-      }else if(ms.Match(EXE_PATTERN) > 0){
-        //call run
-      }else{
-        *toWrite = String("MSv2Stepper: No matching command found.");
       }
+    }else if(ms.Match(EXE_PATTERN) > 0){
+      //call run
+    }else{
+      *toWrite = String(NAME + ": No matching command found.");
     }
+    
     return true;
   }else{
     if(ms.Match(API_PATTERN) > 0){
