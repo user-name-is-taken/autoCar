@@ -97,8 +97,7 @@ class Steppers: public MultiStepper{
         // shield not connected.
          //this is actually redundant in the current form.
          Serial.println(NAME + "shield not connected");
-      }else{  
-        Serial.println("add stepper (real code)");
+      }else{
         Adafruit_MotorShield AFMS = *shields[shield];//parsed out by getMotorShield?
         Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
         
@@ -120,7 +119,8 @@ class Steppers: public MultiStepper{
       for(int index = 0; index <= curStepperIndex; index++){
         if(steppersIndexes[index][0] == shield 
           && steppersIndexes[index][1] == stepperNumb){
-            Serial.println(String(index));
+            Serial.print("Index at: ");
+            Serial.println(index);
           return index; 
         }
       }
@@ -145,12 +145,14 @@ class Steppers: public MultiStepper{
      * Calls moveTo with the stored possitions
      */
     void moveTo(){
-      Serial.println("move to " + String(curStepperIndex));
+      //Serial.println("move to " + String(curStepperIndex));
       long * posArr = getPos_resetMoves();
+      /*
       for(int pos = 0; pos < curStepperIndex; pos++){
         Serial.println("here");
         Serial.println(posArr[pos]);
       }
+      */
       MultiStepper::moveTo(posArr);
       MultiStepper::runSpeedToPosition();
       delete[] posArr;
@@ -167,6 +169,7 @@ class Steppers: public MultiStepper{
          return getPosition(index);
       }else{
         //Motor doesn't exist.
+        Serial.println("motor doesn't exist");
       }
     }
     
@@ -178,6 +181,7 @@ class Steppers: public MultiStepper{
           return stepperObjects[index]->currentPosition();//return a copy of this instead of the real thing.
        }else{
           //error, indexOutOfBounds
+          Serial.println("invalid stepperObjects index");
        }
      }
  
@@ -186,8 +190,9 @@ class Steppers: public MultiStepper{
   //stepperNumb is uint8_T
     uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
     //changing from uint8_t to boolean is pointless because they're both 8bits to the OS.
-    unsigned char curStepperIndex;
-    long moves [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
+    uint8_t curStepperIndex;
+    long moves [10];
+    //you pass this to moveTo. Before you do, you have to resize it with memcpy in getPos_resetMoves
     AccelStepper *stepperObjects [10];//replace positions with this so you can have overlapping groups
         
     /**
@@ -218,6 +223,40 @@ class Steppers: public MultiStepper{
  */
 static Steppers *groups[16];
 
+/**
+   * parses char *message: 
+   *      "^MSv2Steppers_[67]%x_move_[0-1]_[\-\+]%x%x%x_group_%x%x$" - total len = 35
+   * For these arameters: [uint8_t stepperNumb, long moveAmount, int group]
+   * 
+   * Then uses these parameters to tell the Steppers object how much to move when an execute
+   * is received.
+   * 
+ */
+void setToMove(char *message, int shieldInt, String *toWrite){
+  uint8_t group = substr2num(message, 34, 36);
+  if(group < 16){//group isn't too large.
+    uint8_t stepperNumb = message[21] - '0'; //conversion to number
+    //Multiplying by 256 here because substr2num can only handle 2 digits at a time
+    long moveAmount = (substr2num(message, 24, 25) * 256) + substr2num(message, 25, 27);
+    //24 in the neg or positive.
+    //' for char, " for strings!!!
+    //https://stackoverflow.com/questions/7808405/comparing-a-char-to-a-const-char
+    if(message[23] == '-')
+      moveAmount *= -1;
+    if(groups[group] == NULL){
+      groups[group] = new Steppers();
+    }
+    groups[group]->addStepper(stepperNumb, shieldInt);
+    //Adds the stepper if it doesn't exist.
+    groups[group]->setToMove(shieldInt, stepperNumb, moveAmount);
+    //Move all the stepper motors the required amount.
+  }else{//group too large for the groups array
+    toWrite->concat(": for memory purposes, only 16 groups allowed (0-15). ");
+      //"An extra byte char is possible in the pattern for future expansion"
+      //"but for now don't use it.");
+    //return true;//kick out of this, because we have an error.
+  }
+}
 
 
 /*
@@ -248,35 +287,7 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
           //unknown error
         }
       }else{//shield connected.
-        /**
-         * Parameters: char *message, [uint8_t stepperNumb, long moveAmount, int group]
-         * returns nothing, but overwrites the above parameters with the parsed crap
-         * 
-         * parsing: "^MSv2Steppers_[67]%x_move_[0-1]_[\-\+]%x%x%x_group_%x%x$" - total len = 35
-         */
-        uint8_t group = substr2num(message, 34, 36);
-        if(group < 16){//group isn't too large.
-          uint8_t stepperNumb = message[21] - '0'; //conversion to number
-          //Multiplying by 256 here because substr2num can only handle 2 digits at a time
-          long moveAmount = (substr2num(message, 24, 25) * 256) + substr2num(message, 25, 27);
-          //24 in the neg or positive.
-          //' for char, " for strings!!!
-          //https://stackoverflow.com/questions/7808405/comparing-a-char-to-a-const-char
-          if(message[23] == '-')
-            moveAmount *= -1;
-          if(groups[group] == NULL){
-            groups[group] = new Steppers();
-          }
-          groups[group]->addStepper(stepperNumb, shieldInt);
-          //Adds the stepper if it doesn't exist.
-          groups[group]->setToMove(shieldInt, stepperNumb, moveAmount);
-          //Move all the stepper motors the required amount.
-        }else{//group too large for the groups array
-          toWrite->concat(": for memory purposes, only 16 groups allowed (0-15). ");
-            //"An extra byte char is possible in the pattern for future expansion"
-            //"but for now don't use it.");
-          //return true;//kick out of this, because we have an error.
-        }
+        setToMove(message, shieldInt, toWrite);
       }
     }else if(ms.Match(EXE_PATTERN) > 0){
       //call run
