@@ -54,8 +54,12 @@ int getMotorShield(char *message){
 // the above might help with the conversion
 
 //pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
-   uint8_t addr = substr2num(message, 5,7);//make sure this is the right length
-   //MSv2_60_speed_1_10
+//strchr: http://www.cplusplus.com/reference/cstring/strchr/
+  //(int) "_" to make the implicit promotion explicit
+   char *first = strchr(message, (int) "_");
+   char *second = strchr( first + 1, (int) "_");
+   uint8_t addr = substr2num(message, first - message , second - message);//make sure this is the right length
+   //API_SHIELD_COMMAND...
    if(addr < 96 || addr > 127){
      return -1;
    }else if(!shieldConnected(addr)){
