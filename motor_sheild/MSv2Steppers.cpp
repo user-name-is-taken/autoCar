@@ -88,10 +88,11 @@ class Steppers: public MultiStepper{
       }else if(stepperNumb != 0 and stepperNumb!=1){
          //Invalid Stepper motor
          Serial.println("invalid stepper number " + String(stepperNumb));         
-      }else if(getSavedStepperIndex(shield, stepperNumb) != -1){
+      }else if(getSavedStepperIndex(shield, stepperNumb) != 255){
          //stepper already added.
          //This will happen in most cases.
-         Serial.println("stepper already exists");
+         Serial.println("stepper already exists " + String(getSavedStepperIndex(shield, stepperNumb)) );
+         Serial.println("step index: " +String(curStepperIndex));
       }else if(!shieldConnected(shield)){
         // shield not connected.
          //this is actually redundant in the current form.
@@ -113,16 +114,17 @@ class Steppers: public MultiStepper{
      * Finds the index of stepper motor in the class's array that's on this shield,
      * and is this stepper motor. 
      * 
-     * Returns: the index in the array if the motor is in the array, otherwise it returns -1
+     * Returns: the index in the array if the motor is in the array, otherwise it returns 255
     */
     uint8_t getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb){
       for(int index = 0; index <= curStepperIndex; index++){
         if(steppersIndexes[index][0] == shield 
           && steppersIndexes[index][1] == stepperNumb){
+            Serial.println(String(index));
           return index; 
         }
       }
-      return -1;
+      return 255;
     }
 
     /**
@@ -234,7 +236,7 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
   if(ms.Match(STEPPER_PATTERN_START) > 0){
     Serial.println("match");
     if(ms.Match(MOVE_PATTERN) > 0){
-      int shieldInt = getMotorShield(message);
+      uint8_t shieldInt = getMotorShield(message);
       if(shieldInt < 0){//error
         if(shieldInt == -1){
           //set toWrite to an error message saying this isn't a valid number
