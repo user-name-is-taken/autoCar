@@ -10,7 +10,15 @@
 
 //general pattern: MSv2Steppers_(shield I2C address)_(command)_(stepper motor number)_(parameter)
 
-//maybe add a group of motors? You can only have 10 at a time.
+//You should have int params telling where parts of the string start and stop.
+
+/*TESTS:
+ * MSv2Steppers_60_move_1_+0FF_group_00
+ * MSv2Steppers_60_move_0_+0FF_group_00
+ * 
+ * MSv2Steppers_execute_group_00 
+ * 
+*/
 
 static const char STEPPER_PATTERN_START [] = "^MSv2Steppers_";
 static const char MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_[+-]"
@@ -131,6 +139,7 @@ class Steppers: public MultiStepper{
     void moveTo(){
       long * posArr = getPos_resetMoves();
       MultiStepper::moveTo(posArr);
+      MultiStepper::runSpeedToPosition();
       delete[] posArr;
       //delete[]: http://www.cplusplus.com/reference/new/operator%20new[]/
     }
