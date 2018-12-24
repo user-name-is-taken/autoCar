@@ -185,7 +185,7 @@ class Steppers: public MultiStepper{
   //Adafruit_MotorShield addresses are uint8_t
   //stepperNumb is uint8_T
     uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
-    //change this to 2 arrays: bool stepper [10] and uint8_t shield [10]
+    //changing from uint8_t to boolean is pointless because they're both 8bits to the OS.
     unsigned char curStepperIndex;
     long moves [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
     AccelStepper *stepperObjects [10];//replace positions with this so you can have overlapping groups
@@ -216,7 +216,7 @@ class Steppers: public MultiStepper{
  * Because That number isn't realistic, I set the number of possible groups to 100
  * which is more than enough for 99% of projects.
  */
-Steppers *groups[16];
+static Steppers *groups[16];
 
 
 
@@ -235,14 +235,15 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
   if(ms.Match(STEPPER_PATTERN_START) > 0){
+    toWrite->concat(NAME);
     if(ms.Match(MOVE_PATTERN) > 0){
       uint8_t shieldInt = getMotorShield(message);
       if(shieldInt < 0){//error
         if(shieldInt == -1){
           //set toWrite to an error message saying this isn't a valid number
-          *toWrite = String(NAME + ": That isn't a valid shield address.");
+          toWrite->concat(": That isn't a valid shield address.");
         }else if(shieldInt == -2){
-          *toWrite = String(NAME + ": Shield not attached."); 
+          toWrite->concat(": Shield not attached."); 
         }else{
           //unknown error
         }
@@ -271,18 +272,18 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
           groups[group]->setToMove(shieldInt, stepperNumb, moveAmount);
           //Move all the stepper motors the required amount.
         }else{//group too large for the groups array
-          *toWrite = String(NAME + ": for memory purposes, only 16 groups allowed (0-15). "
-                                    "An extra byte char is possible in the pattern for future expansion"
-                                    "but for now don't use it.");
+          toWrite->concat(": for memory purposes, only 16 groups allowed (0-15). ");
+            //"An extra byte char is possible in the pattern for future expansion"
+            //"but for now don't use it.");
           //return true;//kick out of this, because we have an error.
         }
       }
     }else if(ms.Match(EXE_PATTERN) > 0){
       //call run
       groups[substr2num(message, 27, 29)]->moveTo();
-      *toWrite = String(NAME + ": Move success");
+      toWrite->concat(": Move success");
     }else{
-      *toWrite = String(NAME + ": No matching command found.");
+      toWrite->concat(": No matching command found.");
     }
     return true;
   }else{

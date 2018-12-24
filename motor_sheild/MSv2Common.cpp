@@ -66,8 +66,7 @@ uint8_t getMotorShield(char *message){
   //(int) "_" to make the implicit promotion explicit
    char *first = strchr(message, (int) '_');
    char *second = strchr( first + 1, (int) '_');
-   uint8_t addr = substr2num(message, first + 1 - message , second - message);//make sure this is the right length
-   //API_SHIELD_COMMAND...
+   uint8_t addr = substr2num(message, first + 1 - message , second - message);
    if(addr < 96 || addr > 127){
      return -1;
    }else if(!shieldConnected(addr)){

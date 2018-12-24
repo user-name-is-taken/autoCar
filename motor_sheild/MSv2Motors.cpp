@@ -31,10 +31,10 @@ static const String NAME = "MSv2Motors";
  * pattern: ^MSv2Motors_[67][0-9A-Fa-f]_speed_[1-4]_[0-9a-fA-F]{2,2}$
  *   - example: MSv2Motors_60_speed_1_10
  */
-boolean setMotorSpeed(char *message, Adafruit_MotorShield shield){
+boolean setMotorSpeed(char *message, Adafruit_MotorShield *shield){
    uint8_t motorAddr = message[20] -'0';//make sure this is the right length
    uint8_t intSpeed = substr2num(message, 22, 24);//make sure this is the right length
-   shield.getMotor(motorAddr)->setSpeed(intSpeed);
+   shield->getMotor(motorAddr)->setSpeed(intSpeed);
    return true;
 };
 
@@ -46,17 +46,17 @@ boolean setMotorSpeed(char *message, Adafruit_MotorShield shield){
  * DIR_PATTERN: ^MSv2Motors_[67][0-9A-Fa-f]_direction_[1-4]_[0-2]$
  *   - example: MSv2Motors_60_direction_1_1
  */
-boolean setMotorDir(char *message, Adafruit_MotorShield shield){
+boolean setMotorDir(char *message, Adafruit_MotorShield *shield){
    uint8_t motorAddr = message[24] - '0';
    switch(message[26]){
      case '0':
-          shield.getMotor(motorAddr)->run(RELEASE); 
+          shield->getMotor(motorAddr)->run(RELEASE); 
           break;
      case '1':
-          shield.getMotor(motorAddr)->run(FORWARD);     
+          shield->getMotor(motorAddr)->run(FORWARD);     
           break;
      case '2':
-          shield.getMotor(motorAddr)->run(BACKWARD);
+          shield->getMotor(motorAddr)->run(BACKWARD);
           break;
      default:
           return false;
@@ -89,12 +89,10 @@ boolean setMotorDir(char *message, Adafruit_MotorShield shield){
 */
 boolean checkMSv2Motors(char *message, String *toWrite){
   MatchState ms;
-  ms.Target(message);
-  Serial.println(message);
-  char isForShield = ms.Match(SHIELD_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
-  if(isForShield > 0){
+  if(ms.Match(SHIELD_PATTERN_START) > 0){
+    toWrite->concat(NAME);
     //parse out which shield, set it as a variable
     Serial.println("match");//only works on the first one?
     int shieldInt = getMotorShield(message);
@@ -109,22 +107,22 @@ boolean checkMSv2Motors(char *message, String *toWrite){
       if(ms.Match(SPEED_PATTERN) > 0){
         //parse out params
         //set speed on the shield
-        if(setMotorSpeed(message, *shields[shieldInt])){
-          *toWrite = String("MotorShield: speed set success.");  
+        if(setMotorSpeed(message, shields[shieldInt])){
+          toWrite->concat("MotorShield: speed set success.");  
         }else{
-          *toWrite = String("MotorShield: speed set fail.");
+          toWrite->concat("MotorShield: speed set fail.");
         }
       }else if(ms.Match(DIR_PATTERN) > 0){
         //set direction
-        if(setMotorDir(message, *shields[shieldInt])){
-          *toWrite = String("MotorShield: direction set success.");
+        if(setMotorDir(message, shields[shieldInt])){
+          toWrite->concat("MotorShield: direction set success.");
         }else{
-          *toWrite = String("MotorShield: direction set failed.");
+          toWrite->concat("MotorShield: direction set failed.");
         }
       //ADD OTHER STUFF (SET SERVOS...)
         // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
       }else{
-        *toWrite = String("MotorShield: No matching command found.");
+        toWrite->concat("MotorShield: No matching command found.");
       }
     }
     return true;

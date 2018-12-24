@@ -10,10 +10,8 @@ Make sure your line separator is set to newline, not carrage return
 */
 
 #include <Wire.h>
-//#include "MSv2Motors.h"
+#include "MSv2Motors.h"
 #include "MSv2Steppers.h"
-// consider including #include <Regexp.h> here because it might be used in multiple libraries.
-// #include <Adafruit_MotorShield.h>
 
 String toWrite;
 char *usb;
@@ -57,14 +55,14 @@ void MyFunction(){
   
      
      //***********do stuff with the serial input****************
-     /*
+     
      if(checkMSv2Motors(usb, &toWrite)){
        Serial.println(usb);
        //https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
        Serial.println(toWrite);//passing the pointer
        //NAME + "_" + I wanted to add this, but they're different types
      }else 
-     */
+     
      if(checkMSv2Steppers(usb, &toWrite)){
        Serial.println(usb);
        Serial.println(toWrite);//passing the pointer
