@@ -112,29 +112,24 @@ class Steppers: public MultiStepper{
     }
 
     /**
-     * Tells the motor to move moveAmount ticks relative to the position it's in.
+     * Tells the motor to move moveAmount ticks relative to the position it's in when it's executed.
      */
     void setToMove(uint8_t shield, uint8_t stepperNumb, long moveAmount){
-       uint8_t index = getSavedStepperIndex(shield, stepperNumb);
-       long curPos = getPosition(index);
-       curPos += moveAmount;// returned by reference?
-       //setPosition(index, curPos); //not necessary if returned by ref
+       setToMove(getSavedStepperIndex(shield, stepperNumb), moveAmount);
     }
 
     /**
      * Tells the motor to move moveAmount ticks relative to the position it's in.
      */
     void setToMove(uint8_t index, long moveAmount){
-       long curPos = getPosition(index);
-       curPos += moveAmount;// returned by reference?
-       //setPosition(index, curPos); //not necessary if returned by ref
+       moves[index] += moveAmount;
     }
 
     /**
      * Calls moveTo with the stored possitions
      */
     void moveTo(){
-      long * posArr = getPosArr();
+      long * posArr = getPos_resetMoves();
       MultiStepper::moveTo(posArr);
       delete[] posArr;
       //delete[]: http://www.cplusplus.com/reference/new/operator%20new[]/
@@ -158,12 +153,11 @@ class Steppers: public MultiStepper{
      */
      long getPosition(uint8_t index){
        if(index < 10){
-          return positions[index];//return a copy of this instead of the real thing.
+          return stepperObjects[index]->currentPosition();//return a copy of this instead of the real thing.
        }else{
           //error, indexOutOfBounds
        }
      }
-
 
      
   private:
@@ -171,47 +165,20 @@ class Steppers: public MultiStepper{
   //stepperNumb is uint8_T
     uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
     unsigned char curStepperIndex;
-    long positions [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
-    Adafruit_StepperMotor stepperObjects [10];//replace positions with this so you can have overlapping groups
+    long moves [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
+    AccelStepper *stepperObjects [10];//replace positions with this so you can have overlapping groups
 
-
-    /**
-     * Sets the positon array after finding the motor. Creates the motor if it doesn't
-     * exist.
-     */
-    void setPosition(uint8_t shield, uint8_t stepperNumb, long pos){
-      uint8_t index = getSavedStepperIndex(shield, stepperNumb);
-      if(index > -1){
-         setPosition(index, pos);
-      }else{
-        //Motor doesn't exist. Creating the stepperMotor, then set its pos.
-        index = curStepperIndex;
-        addStepper(stepperNumb, shield);
-        setPosition(index, pos);
-      }
-    }
-    
-    /**
-     * sets the possition array that will be passed to moveTo after memcpy 
-     */
-     void setPosition(uint8_t index, long pos){
-       if(index < 10){
-          positions[index] = pos;        
-       }else{
-          //error, indexOutOfBounds
-       }
-     }
     
     /**
      * This will add a long[] array to the free store (heap). You MUST delete it with _____.
      * The array this returns will be passed to moveTo
      */
-    long * getPosArr(){
+    long * getPos_resetMoves(){
       long * posArr = new long [curStepperIndex + 1];// need to put on "free store"
-      //memcpy: https://stackoverflow.com/questions/19439715/using-memcpy-in-c
-      // https://stackoverflow.com/questions/4643713/c-returning-reference-to-local-variable
-      //new: http://www.cplusplus.com/reference/new/operator%20new[]/
-      memcpy(posArr, steppersIndexes, sizeof *positions);
+      for (int i=0; i < curStepperIndex; i++){
+        posArr[i] = stepperObjects[i]->currentPosition() + moves[i];
+        moves[i] = 0;
+      }
       return posArr;
     }
 };
