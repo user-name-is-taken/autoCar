@@ -8,12 +8,18 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
+//general pattern: MSv2Steppers_(shield I2C address)_(command)_(stepper motor number)_(parameter)
 
-static const char SHIELD_PATTERN_START [] = "^MSv2Steppers_";
-static const char SPEED_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_%x%x$";
-//make sure you send hex bytes!
-static const char DIR_PATTERN [] = "^MSv2Steppers_[67]%x_absMove_[0-1]_[0-2]$";
-static const char DIR_PATTERN [] = "^MSv2Steppers_execute$";
+//maybe add a group of motors? You can only have 10 at a time.
+
+static const char STEPPER_PATTERN_START [] = "^MSv2Steppers_";
+static const char MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_-?\\d{1,19}$";
+//The end matches longs https://stackoverflow.com/questions/11243204/how-to-match-a-long-with-java-regex
+
+//move to an absolute possition
+static const char ABS_MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_absMove_[0-1]_-?\\d{1,19}$";
+
+static const char EXE_PATTERN [] = "^MSv2Steppers_execute$";
 
 static const String NAME = "MSv2Steppers";
 
@@ -192,6 +198,7 @@ class Steppers: public MultiStepper{
     uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
     unsigned char curStepperIndex;
     long positions [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
+    Adafruit_StepperMotor stepperObjects [10];//replace positions with this so you can have overlapping groups
     
     /**
      * This will add a long[] array to the free store (heap). You MUST delete it with _____.
@@ -229,10 +236,10 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
   MatchState ms;
   ms.Target(message);
   Serial.println(message);
-  char isForShield = ms.Match(SHIELD_PATTERN_START);//check if the message is for the shield
+  char isForStepper = ms.Match(STEPPER_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
-  if(isForShield > 0){
+  if(isForStepper > 0){
     //parse out which shield, set it as a variable
     Serial.println("match");//only works on the first one?
     int shieldInt = getMotorShield(message);
@@ -244,7 +251,7 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
          *toWrite = String("MotorShield: Shield not attached."); 
        }
     }else{
-      if(ms.Match(SPEED_PATTERN) > 0){
+      if(ms.Match(MOVE_PATTERN) > 0){
         //parse out params
         //set speed on the shield
         /*
@@ -254,19 +261,19 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
           *toWrite = String("MotorShield: speed set fail.");
         }
         */
-      }else if(ms.Match(DIR_PATTERN) > 0){
-        //set direction
+      }else if(ms.Match(ABS_MOVE_PATTERN) > 0){
+        //set an absolute position to move to
         /*
         if(setMotorDir(message, *shields[shieldInt])){
-          *toWrite = String("MotorShield: direction set success.");
+          *toWrite = String("MSv2Stepper: direction set success.");
         }else{
           *toWrite = String("MotorShield: direction set failed.");
         }
-      //ADD OTHER STUFF (SET SERVOS...)
-        // note, people can put crap between the SHIELD_PATTERN_START and the parameter patterns, but this isn't really a problem
         */
+      }else if(ms.Match(EXE_PATTERN) > 0){
+        //call run
       }else{
-        *toWrite = String("MotorShield: No matching command found.");
+        *toWrite = String("MSv2Stepper: No matching command found.");
       }
     }
     return true;
