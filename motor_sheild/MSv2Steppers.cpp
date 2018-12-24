@@ -229,10 +229,12 @@ Steppers *groups[16];
  
 */
 boolean checkMSv2Steppers(char *message, String *toWrite){
+  Serial.println("message");
   MatchState ms;
   ms.Target(message);
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
+  Serial.println("message");//TODO
   if(ms.Match(STEPPER_PATTERN_START) > 0){
     Serial.println("match");
     if(ms.Match(MOVE_PATTERN) > 0){
