@@ -83,14 +83,14 @@ class Steppers: public MultiStepper{
     void addStepper(uint8_t stepperNumb, uint8_t shield, uint16_t steps_per_rev = 200){
       if(curStepperIndex >= 9){
         //error, too many shields
-        Serial.println(NAME + "stepper index out of bounds.");
+        Serial.println(NAME + "too many steppers to add another.");
       }else if(stepperNumb != 0 and stepperNumb!=1){
          //Invalid Stepper motor
          Serial.println(NAME + "invalid stepper number " + String(stepperNumb));         
       }else if(getSavedStepperIndex(shield, stepperNumb) != 255){
          //stepper already added.
          //This will happen in most cases.
-         Serial.println(NAME + "stepper already exists at" +
+         Serial.println(NAME + "stepper already exists at " +
                         String(getSavedStepperIndex(shield, stepperNumb)));
          Serial.println(NAME + "step index: " +String(curStepperIndex));
       }else if(!shieldConnected(shield)){
@@ -145,7 +145,7 @@ class Steppers: public MultiStepper{
      * Calls moveTo with the stored possitions
      */
     void moveTo(){
-      //Serial.println("move to " + String(curStepperIndex));
+      //Serial.println("move to " + String(curStepperIndex));//getting printed as m?
       long * posArr = getPos_resetMoves();
       /*
       for(int pos = 0; pos < curStepperIndex; pos++){
@@ -191,7 +191,7 @@ class Steppers: public MultiStepper{
     uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
     //changing from uint8_t to boolean is pointless because they're both 8bits to the OS.
     uint8_t curStepperIndex;
-    long moves [10];
+    long moves [10] = {0};
     //you pass this to moveTo. Before you do, you have to resize it with memcpy in getPos_resetMoves
     AccelStepper *stepperObjects [10];//replace positions with this so you can have overlapping groups
         
