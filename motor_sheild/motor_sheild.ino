@@ -18,21 +18,6 @@ char *usb;
 byte counter;
 const static String NAME = "motors";
 
-void setup() {
-  Serial.begin(9600);           // set up Serial library at 9600 bps
-  Serial.println("Adafruit Motorshield v2 - DC Motor test!");
-  toWrite = "";
-  counter = 0;
-  usb = new char[50];
-  Wire.begin();// super important for my motor shield library
-  //char letter;
-
-   //Serial.onReceive(MyFunction);
-}
-
-void loop() {
-  MyFunction();
-}
 
 void MyFunction(){
    if(Serial.available() > 0){
@@ -80,5 +65,22 @@ void MyFunction(){
       */
    } 
 }
+
+void setup() {
+  Serial.begin(9600);           // set up Serial library at 9600 bps
+  Serial.println("Adafruit Motorshield v2 - DC Motor test!");
+  toWrite = "";
+  counter = 0;
+  usb = new char[50];
+  Wire.begin();// super important for my motor shield library
+  //char letter;
+
+   //Serial.onReceive(MyFunction);
+}
+
+void loop() {
+  MyFunction();
+}
+
 //TODO: Add a callback when Serial data is received
 //https://playground.arduino.cc/Serial/AttachReceiveFunction
