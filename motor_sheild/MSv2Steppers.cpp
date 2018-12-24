@@ -23,9 +23,19 @@
 static const char STEPPER_PATTERN_START [] = "^MSv2Steppers_";
 static const char MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_[+-]"
                                     "%x%x%x_group_%x%x$";
-//The end matches longs https://stackoverflow.com/questions/11243204/how-to-match-a-long-with-java-regex
+static const uint8_t MOVE_AMOUNT_END = 27;
+static const uint8_t MOVE_AMOUNT_SPLIT = 25;
+static const uint8_t MOVE_AMOUNT_START = 24;
+static const uint8_t STEPPER_INDEX = 21;
+static const uint8_t GROUP_START = 34;
+static const uint8_t GROUP_END = 36;
+
+
 
 static const char EXE_PATTERN [] = "^MSv2Steppers_execute_group_%x%x$";
+
+static const uint8_t EXE_GROUP_START = 27;
+static const uint8_t EXE_GROUP_END = 29;
 
 static const String NAME = "MSv2Steppers";
 
@@ -207,11 +217,12 @@ static Steppers *groups[16];
    * 
  */
 void setToMove(char *message, int shieldInt, String *toWrite){
-  uint8_t group = substr2num(message, 34, 36);
+  uint8_t group = substr2num(message, GROUP_START, GROUP_END);
   if(group < 16){//group isn't too large.
-    uint8_t stepperNumb = message[21] - '0'; //conversion to number
+    uint8_t stepperNumb = message[STEPPER_INDEX] - '0'; //conversion to number
     //Multiplying by 256 here because substr2num can only handle 2 digits at a time
-    long moveAmount = (substr2num(message, 24, 25) * 256) + substr2num(message, 25, 27);
+    long moveAmount = ((message[MOVE_AMOUNT_START] - '0') * 256) + 
+                      substr2num(message, MOVE_AMOUNT_SPLIT, MOVE_AMOUNT_END);
     //24 in the neg or positive.
     //' for char, " for strings!!!
     //https://stackoverflow.com/questions/7808405/comparing-a-char-to-a-const-char
@@ -265,7 +276,7 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
       }
     }else if(ms.Match(EXE_PATTERN) > 0){
       //call run
-      groups[substr2num(message, 27, 29)]->moveTo();
+      groups[substr2num(message, EXE_GROUP_START, EXE_GROUP_END)]->moveTo();
       toWrite->concat(": Move success");
     }else{
       toWrite->concat(": No matching command found.");
