@@ -81,23 +81,29 @@ class Steppers: public MultiStepper{
      * with 200 steps
      */
     void addStepper(uint8_t stepperNumb, uint8_t shield, uint16_t steps_per_rev = 200){
+      Serial.println("inside add stepper");
       if(curStepperIndex >= 9){
         //error, too many shields
+        Serial.println("stepper index out of bounds.");
       }else if(stepperNumb != 0 and stepperNumb!=1){
          //Invalid Stepper motor
+         Serial.println("invalid stepper number " + String(stepperNumb));         
       }else if(getSavedStepperIndex(shield, stepperNumb) != -1){
          //stepper already added.
          //This will happen in most cases.
+         Serial.println("stepper already exists");
       }else if(!shieldConnected(shield)){
         // shield not connected.
          //this is actually redundant in the current form.
+         Serial.println("shield not connected");
       }else{  
+        Serial.println("add stepper (real code)");
         Adafruit_MotorShield AFMS = *shields[shield];//parsed out by getMotorShield?
         static Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
         
         MyAccelStepper curStepper(myStep);// create a MyAccelStepper named curStepper
         MultiStepper::addStepper(curStepper);//super class's method
-        curStepperIndex +=1;
+        curStepperIndex++;
         steppersIndexes[curStepperIndex][0] = shield;
         steppersIndexes[curStepperIndex][1] = stepperNumb;
       }
@@ -137,7 +143,12 @@ class Steppers: public MultiStepper{
      * Calls moveTo with the stored possitions
      */
     void moveTo(){
+      Serial.println("move to " + String(curStepperIndex));
       long * posArr = getPos_resetMoves();
+      for(int pos = 0; pos < curStepperIndex; pos++){
+        Serial.println("here");
+        Serial.println(posArr[pos]);
+      }
       MultiStepper::moveTo(posArr);
       MultiStepper::runSpeedToPosition();
       delete[] posArr;
@@ -183,6 +194,7 @@ class Steppers: public MultiStepper{
     long * getPos_resetMoves(){
       long * posArr = new long [curStepperIndex + 1];// need to put on "free store"
       for (int i=0; i < curStepperIndex; i++){
+        Serial.println(moves[i]);
         posArr[i] = stepperObjects[i]->currentPosition() + moves[i];
         moves[i] = 0;
       }
@@ -241,7 +253,7 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
          */
         uint8_t group = substr2num(message, 34, 36);
         if(group < 16){//group isn't too large.
-          uint8_t stepperNumb = message[22] - '0'; //conversion to number
+          uint8_t stepperNumb = message[21] - '0'; //conversion to number
           //Multiplying by 256 here because substr2num can only handle 2 digits at a time
           long moveAmount = (substr2num(message, 24, 25) * 256) + substr2num(message, 25, 27);
           //24 in the neg or positive.
