@@ -13,13 +13,10 @@
 //maybe add a group of motors? You can only have 10 at a time.
 
 static const char STEPPER_PATTERN_START [] = "^MSv2Steppers_";
-static const char MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_-?\\d{1,19}$";
+static const char MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_move_[0-1]_%x%x%x_group_[0-9]{0,2}$";
 //The end matches longs https://stackoverflow.com/questions/11243204/how-to-match-a-long-with-java-regex
 
-//move to an absolute possition
-//static const char ABS_MOVE_PATTERN [] = "^MSv2Steppers_[67]%x_absMove_[0-1]_-?\\d{1,19}$";
-
-static const char EXE_PATTERN [] = "^MSv2Steppers_execute$";
+static const char EXE_PATTERN [] = "^MSv2Steppers_execute_group_[0-9]{0,2}$";
 
 static const String NAME = "MSv2Steppers";
 
@@ -158,8 +155,7 @@ class Steppers: public MultiStepper{
           //error, indexOutOfBounds
        }
      }
-
-     
+ 
   private:
   //Adafruit_MotorShield addresses are uint8_t
   //stepperNumb is uint8_T
@@ -167,8 +163,7 @@ class Steppers: public MultiStepper{
     unsigned char curStepperIndex;
     long moves [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
     AccelStepper *stepperObjects [10];//replace positions with this so you can have overlapping groups
-
-    
+        
     /**
      * This will add a long[] array to the free store (heap). You MUST delete it with _____.
      * The array this returns will be passed to moveTo
@@ -187,16 +182,22 @@ class Steppers: public MultiStepper{
 //********************************MAIN********************************************
 
 /*
- * motor shield signals are of the format "MSv2_shield number_then the command_parameters"
+ * 151473214816 is the number of unique combinations the 64 possible stepper motors can be 
+ * combined into sets of 10 motors for Steppers objects. (combinations 64 choose 10 
+ * without reuses or repeats)
+ * 
+ * Because That number isn't realistic, I set the number of possible groups to 100
+ * which is more than enough for 99% of projects.
+ */
+Steppers *groups = new Steppers[255];
+
+
+
+/*
+ * Motor shield Stepper signals are of the format 
+ * "MSv2Stepper_shield number_then the command_parameters"
  * see the constants at the top for the commands
  * 
- * if the message is meant for a motor shield:
- *   - If the shield doesn't exist, create it and add it to shields
- *     - If there's not a shield connected with the corresponding address, throw an error
- *   - Run the function on the right shield
- *   - return true
- * else: 
- *   - return false
  *   
  *   Remember, you NEED to de-reference toWrite with this: https://stackoverflow.com/questions/2229498/passing-by-reference-in-c
  
@@ -205,14 +206,11 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
   MatchState ms;
   ms.Target(message);
   Serial.println(message);
-  char isForStepper = ms.Match(STEPPER_PATTERN_START);//check if the message is for the shield
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
-  if(isForStepper > 0){
+  if(ms.Match(STEPPER_PATTERN_START) > 0){
     //parse out which shield, set it as a variable
     Serial.println("match");//only works on the first one?
-    
-    
     if(ms.Match(MOVE_PATTERN) > 0){
       int shieldInt = getMotorShield(message);
       //parse out params
@@ -222,14 +220,32 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
           *toWrite = String(NAME + ": That isn't a valid shield address.");
         }else if(shieldInt == -2){
           *toWrite = String(NAME + ": Shield not attached."); 
+        }else{
+          //unknown error
         }
+      }else{
+        /**
+         * Parameters: char *message, [uint8_t stepperNumb, long moveAmount, int group]
+         * returns nothing, but overwrites the above parameters with the parsed crap
+         * 
+         * parsing: "^MSv2Steppers_[67]%x_move_[0-1]_%x%x%x_group_%x%x$" - total len = 35
+         */
+        uint8_t stepperNumb = message[22] - "0";
+        long moveAmount = substr2num(message, 24, 28);//27 is non-inclusive
+        int group = substr2num(message, 35 - 3, 35);
+        if(groups[group] == NULL){
+          groups[group] = new Steppers();
+        }
+        groups[group]->addStepper(stepperNumb, shieldInt);// Add some error checking here...
+        groups[group]->setToMove(shieldInt, stepperNumb, moveAmount);
       }
     }else if(ms.Match(EXE_PATTERN) > 0){
       //call run
+      groups[substr2num(message, 26, 29)]->moveTo();
+      *toWrite = String(NAME + ": Move success");
     }else{
       *toWrite = String(NAME + ": No matching command found.");
     }
-    
     return true;
   }else{
     if(ms.Match(API_PATTERN) > 0){
