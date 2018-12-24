@@ -175,13 +175,12 @@ class Steppers: public MultiStepper{
     uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
     //changing from uint8_t to boolean is pointless because they're both 8bits to the OS.
     uint8_t curStepperIndex;
-    long moves [10] = {0};
-    //you pass this to moveTo. Before you do, you have to resize it with memcpy in getPos_resetMoves
-    AccelStepper *stepperObjects [10];//replace positions with this so you can have overlapping groups
-        
+    long moves [10] = {0};//see getPos_resetMoves() and moveTo()
+    AccelStepper *stepperObjects [10];
     /**
-     * This will add a long[] array to the free store (heap). You MUST delete it with _____.
-     * The array this returns will be passed to moveTo
+     * This will add a long[] array to the free store (heap). You MUST delete it with delete[].
+     * 
+     * 
      */
     long * getPos_resetMoves(){
       long * posArr = new long [curStepperIndex + 1];// need to put on "free store"
