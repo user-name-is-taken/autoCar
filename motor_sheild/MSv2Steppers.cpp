@@ -228,11 +228,14 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
          * Parameters: char *message, [uint8_t stepperNumb, long moveAmount, int group]
          * returns nothing, but overwrites the above parameters with the parsed crap
          * 
-         * parsing: "^MSv2Steppers_[67]%x_move_[0-1]_%x%x%x_group_%x%x$" - total len = 35
+         * parsing: "^MSv2Steppers_[67]%x_move_[0-1]_[\-\+]%x%x%x_group_%x%x$" - total len = 35
          */
         uint8_t stepperNumb = message[22] - "0";
-        long moveAmount = substr2num(message, 24, 28);//27 is non-inclusive
-        int group = substr2num(message, 35 - 3, 35);
+        //TODO: change from substr2num. it returns a uint8_t, which is too
+        long moveAmount = substr2num(message, 24, 29);//24 in the neg or positive.
+        if(strcmp(message[24], "-"))
+          moveAmount *= -1;
+        int group = substr2num(message, 36 - 3, 36);
         if(groups[group] == NULL){
           groups[group] = new Steppers();
         }
