@@ -40,7 +40,6 @@ uint8_t substr2num(char *message, int A, int B){
  * Note, this only works when everything's imported for some reason.
  */
 boolean shieldConnected(uint8_t shieldAddr){
-  Serial.println("in shield connected)");
   Wire.beginTransmission(shieldAddr);
   int end = Wire.endTransmission(true);
   //return shieldAddressValidator(shieldAddr); (A customization I added 

@@ -38,7 +38,6 @@ void loop() {
 
 void MyFunction(){
    if(Serial.available() > 0){
-    Serial.println("in callback");
     //************read from serial**************
      while(Serial.available() > 0){
         char letter = Serial.read();

@@ -81,32 +81,32 @@ class Steppers: public MultiStepper{
      * with 200 steps
      */
     void addStepper(uint8_t stepperNumb, uint8_t shield, uint16_t steps_per_rev = 200){
-      Serial.println("inside add stepper");
       if(curStepperIndex >= 9){
         //error, too many shields
-        Serial.println("stepper index out of bounds.");
+        Serial.println(NAME + "stepper index out of bounds.");
       }else if(stepperNumb != 0 and stepperNumb!=1){
          //Invalid Stepper motor
-         Serial.println("invalid stepper number " + String(stepperNumb));         
+         Serial.println(NAME + "invalid stepper number " + String(stepperNumb));         
       }else if(getSavedStepperIndex(shield, stepperNumb) != 255){
          //stepper already added.
          //This will happen in most cases.
-         Serial.println("stepper already exists " + String(getSavedStepperIndex(shield, stepperNumb)) );
-         Serial.println("step index: " +String(curStepperIndex));
+         Serial.println(NAME + "stepper already exists at" +
+                        String(getSavedStepperIndex(shield, stepperNumb)));
+         Serial.println(NAME + "step index: " +String(curStepperIndex));
       }else if(!shieldConnected(shield)){
         // shield not connected.
          //this is actually redundant in the current form.
-         Serial.println("shield not connected");
+         Serial.println(NAME + "shield not connected");
       }else{  
         Serial.println("add stepper (real code)");
         Adafruit_MotorShield AFMS = *shields[shield];//parsed out by getMotorShield?
-        static Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
+        Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
         
         MyAccelStepper curStepper(myStep);// create a MyAccelStepper named curStepper
         MultiStepper::addStepper(curStepper);//super class's method
-        curStepperIndex++;
         steppersIndexes[curStepperIndex][0] = shield;
-        steppersIndexes[curStepperIndex][1] = stepperNumb;
+        steppersIndexes[curStepperIndex][1] = stepperNumb;//this could be bool?
+        curStepperIndex++;
       }
     }
 
@@ -185,6 +185,7 @@ class Steppers: public MultiStepper{
   //Adafruit_MotorShield addresses are uint8_t
   //stepperNumb is uint8_T
     uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
+    //change this to 2 arrays: bool stepper [10] and uint8_t shield [10]
     unsigned char curStepperIndex;
     long moves [10];//you pass this to moveTo. Before you do, you have to resize it with memcpy
     AccelStepper *stepperObjects [10];//replace positions with this so you can have overlapping groups
@@ -229,14 +230,11 @@ Steppers *groups[16];
  
 */
 boolean checkMSv2Steppers(char *message, String *toWrite){
-  Serial.println("message");
   MatchState ms;
   ms.Target(message);
   // converting to char array: https://www.arduino.cc/reference/en/language/variables/data-types/string/functions/tochararray/
   // regex from: https://github.com/nickgammon/Regexp also see the installed examples
-  Serial.println("message");//TODO
   if(ms.Match(STEPPER_PATTERN_START) > 0){
-    Serial.println("match");
     if(ms.Match(MOVE_PATTERN) > 0){
       uint8_t shieldInt = getMotorShield(message);
       if(shieldInt < 0){//error
