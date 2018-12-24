@@ -189,7 +189,7 @@ class Steppers: public MultiStepper{
  * Because That number isn't realistic, I set the number of possible groups to 100
  * which is more than enough for 99% of projects.
  */
-Steppers *groups = new Steppers[255];
+Steppers *groups[16];
 
 
 
@@ -230,17 +230,28 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
          * 
          * parsing: "^MSv2Steppers_[67]%x_move_[0-1]_[\-\+]%x%x%x_group_%x%x$" - total len = 35
          */
-        uint8_t stepperNumb = message[22] - "0";
-        //TODO: change from substr2num. it returns a uint8_t, which is too
-        long moveAmount = substr2num(message, 24, 29);//24 in the neg or positive.
-        if(strcmp(message[24], "-"))
-          moveAmount *= -1;
-        int group = substr2num(message, 36 - 3, 36);
-        if(groups[group] == NULL){
-          groups[group] = new Steppers();
+        uint8_t group = substr2num(message, 34, 36);
+        if(group < 16){       
+          uint8_t stepperNumb = message[22] - 48; //48 is '0'.
+          //TODO: change from substr2num. it returns a uint8_t, which is too
+          long moveAmount = (substr2num(message, 24, 25) * 256) + substr2num(message, 25, 27);
+          //24 in the neg or positive.
+          //' for char, " for strings!!!
+          //https://stackoverflow.com/questions/7808405/comparing-a-char-to-a-const-char
+          if(*(message+23) == '-')
+            moveAmount *= -1;
+          
+          if(groups[group] == NULL){
+            groups[group] = new Steppers();
+          }
+          groups[group]->addStepper(stepperNumb, shieldInt);// Add some error checking here...
+          groups[group]->setToMove(shieldInt, stepperNumb, moveAmount);
+        }else{
+          *toWrite = String(NAME + ": for memory purposes, only 16 groups allowed (0-15). "
+                                    "An extra byte char is possible in the pattern for future expansion"
+                                    "but for now don't use it.");
+          return true;//kick out of this, because we have an error.
         }
-        groups[group]->addStepper(stepperNumb, shieldInt);// Add some error checking here...
-        groups[group]->setToMove(shieldInt, stepperNumb, moveAmount);
       }
     }else if(ms.Match(EXE_PATTERN) > 0){
       //call run
