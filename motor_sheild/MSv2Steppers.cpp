@@ -158,32 +158,6 @@ class Steppers: public MultiStepper{
       delete[] posArr;
       //delete[]: http://www.cplusplus.com/reference/new/operator%20new[]/
     }
-
-    /**
-     * Gets the positon array after finding the motor. Creates the motor if it doesn't
-     * exist.
-     */
-    long getPosition(uint8_t shield, uint8_t stepperNumb){
-      uint8_t index = getSavedStepperIndex(shield, stepperNumb);
-      if(index > -1){
-         return getPosition(index);
-      }else{
-        //Motor doesn't exist.
-        Serial.println("motor doesn't exist");
-      }
-    }
-    
-    /**
-     * gets the possition array that will be passed to moveTo after memcpy 
-     */
-     long getPosition(uint8_t index){
-       if(index < 10){
-          return stepperObjects[index]->currentPosition();//return a copy of this instead of the real thing.
-       }else{
-          //error, indexOutOfBounds
-          Serial.println("invalid stepperObjects index");
-       }
-     }
  
   private:
   //Adafruit_MotorShield addresses are uint8_t
