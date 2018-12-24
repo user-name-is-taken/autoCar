@@ -1,5 +1,8 @@
 #include <Adafruit_MotorShield.h>
 #include "MSv2Common.h"
+#include <string.h>     /*strncpy*/
+#include <stdint.h>     /*uint8_t*/
+#include <stdlib.h>     /* strtol */
 
 
 
@@ -17,6 +20,10 @@ Adafruit_MotorShield *shields [32];
  * http://www.cplusplus.com/reference/cstring/strncpy/
  * 
  * Tested, it works
+ * 
+ * Converts at most 2 hex characters from (including) A to (not including) B to a uint8_t.
+ * aka [A,B) -> uint8_t
+ * https://en.wikipedia.org/wiki/Bracket_(mathematics)
  */
 uint8_t substr2num(char *message, int A, int B){
   char str[(B - A) + 1];
