@@ -52,8 +52,8 @@ class MyAccelStepper: public AccelStepper
 
 
 /*
- * Each MultiStepper can contain up to 10 objects. This class wraps MultiStepper to
- * handle these objects
+ * Each MultiStepper can contain up to 10 MyAccelStepper objects. 
+ * This class wraps MultiStepper to handle these objects
  */
 class Steppers: public MultiStepper{
   public:
@@ -93,7 +93,7 @@ class Steppers: public MultiStepper{
         MyAccelStepper curStepper(myStep);// create a MyAccelStepper named curStepper
         MultiStepper::addStepper(curStepper);//super class's method
         steppersIndexes[curStepperIndex][0] = shield;
-        steppersIndexes[curStepperIndex][1] = stepperNumb;//this could be bool?
+        steppersIndexes[curStepperIndex][1] = stepperNumb;
         curStepperIndex++;
       }
     }
@@ -179,13 +179,13 @@ void setup()
 {  
   Serial.begin(9600);
   testStep = new Steppers();
-  testStep->addStepper(0, 0x60);
+  testStep->addStepper(1, 0x60);
   //testStep->addStepper(2, 0x60);
 }
 
 void loop()
 {
-  testStep->setToMove(0x60, 0, 255);
+  testStep->setToMove(0x60, 1, 255);
   testStep->moveTo();
   delay(1000);
   Serial.println("ho");
