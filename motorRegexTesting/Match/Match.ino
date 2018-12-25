@@ -19,9 +19,11 @@
 #include <AccelStepper.h>
 #include <Adafruit_MotorShield.h>
 #include <MultiStepper.h>
+#include "MSv2Common.h"
 
 /**
- * You have to override step0
+ * A customized AccelStepper that takes an Adafruit_StepperMotor.
+ * 
  */
 class MyAccelStepper: public AccelStepper
 {
@@ -32,83 +34,159 @@ class MyAccelStepper: public AccelStepper
          _myStepper = myStepper;
        }
    protected:
-       void step0(long step){
-          (void)(step);
-          if(speed() > 0){
-            _myStepper->onestep(FORWARD, DOUBLE);
+       void step0(long step) override{
+          if(_myStepper == NULL){
+            AccelStepper::step0(step);
           }else{
-            _myStepper->onestep(BACKWARD, DOUBLE);            
+            (void)(step);
+            if(speed() > 0){
+              _myStepper->onestep(FORWARD, DOUBLE);
+            }else{
+              _myStepper->onestep(BACKWARD, DOUBLE);            
+            }          
           }
        }
     private:
        Adafruit_StepperMotor *_myStepper;
 };
 
+
 /*
-#include <ArduinoSTL.h>
-
-using namespace std;
-
-class Steppers{
+ * Each MultiStepper can contain up to 10 objects. This class wraps MultiStepper to
+ * handle these objects
+ */
+class Steppers: public MultiStepper{
   public:
-    void addStepper(uint16_t steps_per_rev, uint8_t stepperNumb, uint8_t shield);
-    Adafruit_StepperMotor getSavedStepper(uint8_t shield, uint8_t stepperNumb);
-    Adafruit_StepperMotor getSavedStepper(int index);
+    Steppers(){
+      curStepperIndex = 0;
+      //steppersIndexes [10][2] = new uint8_t [10][2];
+    }
+    
+    /**
+     * Adds a stepper motor to act in unison with the other bound stepper motors 
+     * 
+     * params:
+     * stepperNum: the number
+     * with 200 steps
+     */
+    void addStepper(uint8_t stepperNumb, uint8_t shield, uint16_t steps_per_rev = 200){
+      if(curStepperIndex >= 9){
+        //error, too many shields
+        Serial.println("too many steppers to add another.");
+      }else if(stepperNumb != 0 and stepperNumb!=1){
+         //Invalid Stepper motor
+         Serial.println("invalid stepper number " + String(stepperNumb));         
+      }else if(getSavedStepperIndex(shield, stepperNumb) != 255){
+         //stepper already added.
+         //This will happen in most cases.
+         Serial.println("stepper already exists at " +
+                        String(getSavedStepperIndex(shield, stepperNumb)));
+         Serial.println("step index: " +String(curStepperIndex));
+      }else if(!shieldConnected(shield)){
+        // shield not connected.
+         //this is actually redundant in the current form.
+         Serial.println("shield not connected");
+      }else{
+        Adafruit_MotorShield AFMS = *shields[shield];//parsed out by getMotorShield?
+        Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
+        
+        MyAccelStepper curStepper(myStep);// create a MyAccelStepper named curStepper
+        MultiStepper::addStepper(curStepper);//super class's method
+        steppersIndexes[curStepperIndex][0] = shield;
+        steppersIndexes[curStepperIndex][1] = stepperNumb;//this could be bool?
+        curStepperIndex++;
+      }
+    }
+
+    /**
+     * Finds the index of stepper motor in the class's array that's on this shield,
+     * and is this stepper motor. 
+     * 
+     * Returns: the index in the array if the motor is in the array, otherwise it returns 255
+    */
+    uint8_t getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb){
+      for(int index = 0; index <= curStepperIndex; index++){
+        if(steppersIndexes[index][0] == shield 
+          && steppersIndexes[index][1] == stepperNumb){
+            Serial.print("Index at: ");
+            Serial.println(index);
+          return index; 
+        }
+      }
+      return 255;
+    }
+
+    /**
+     * Tells the motor to move moveAmount ticks relative to the position it's in when it's executed.
+     */
+    void setToMove(uint8_t shield, uint8_t stepperNumb, long moveAmount){
+       setToMove(getSavedStepperIndex(shield, stepperNumb), moveAmount);
+    }
+
+    /**
+     * Tells the motor to move moveAmount ticks relative to the position it's in.
+     */
+    void setToMove(uint8_t index, long moveAmount){
+       moves[index] += moveAmount;
+    }
+
+    /**
+     * Calls moveTo with the stored possitions
+     */
+    void moveTo(){
+      //Serial.println("move to " + String(curStepperIndex));//getting printed as m?
+      long * posArr = getPos_resetMoves();
+      /*
+      for(int pos = 0; pos < curStepperIndex; pos++){
+        Serial.println("here");
+        Serial.println(posArr[pos]);
+      }
+      */
+      MultiStepper::moveTo(posArr);
+      MultiStepper::runSpeedToPosition();
+      delete[] posArr;
+      //delete[]: http://www.cplusplus.com/reference/new/operator%20new[]/
+    }
+ 
   private:
   //Adafruit_MotorShield addresses are uint8_t
   //stepperNumb is uint8_T
-    uint8_t steppers [10][2];  
+    uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
+    //changing from uint8_t to boolean is pointless because they're both 8bits to the OS.
+    uint8_t curStepperIndex;
+    long moves [10] = {0};//see getPos_resetMoves() and moveTo()
+    AccelStepper *stepperObjects [10];
+    /**
+     * This will add a long[] array to the free store (heap). You MUST delete it with delete[].
+     * 
+     * 
+     */
+    long * getPos_resetMoves(){
+      long * posArr = new long [curStepperIndex + 1];// need to put on "free store"
+      for (int i=0; i < curStepperIndex; i++){
+        Serial.println(moves[i]);
+        posArr[i] = stepperObjects[i]->currentPosition() + moves[i];
+        moves[i] = 0;
+      }
+      return posArr;
+    }
 };
 
-void Steppers::addStepper(uint16 steps_per_rev, uint8_t stepperNumb, uint8_t shield){
-  
-}
-*/
-Adafruit_MotorShield AFMSbot(0x61); // Rightmost jumper closed
-Adafruit_MotorShield AFMStop(0x60); // Default address, no jumpers
 
-// Connect two steppers with 200 steps per revolution (1.8 degree)
-// to the top shield
-Adafruit_StepperMotor *myStepper1 = AFMStop.getStepper(200, 1);
-Adafruit_StepperMotor *myStepper2 = AFMStop.getStepper(200, 2);
-
-
-// Now we'll wrap the 3 steppers in an AccelStepper object
-MyAccelStepper stepper1(myStepper1);
-MyAccelStepper stepper2(myStepper2);
-
-MultiStepper steppers;
-
-long positions [2];
+Steppers *testStep;
 
 void setup()
 {  
   Serial.begin(9600);
-  AFMSbot.begin(); // Start the bottom shield
-  AFMStop.begin(); // Start the top shield
-   
-  stepper1.setMaxSpeed(100.0);
-  stepper1.setSpeed(100.0);
-  //stepper1.setAcceleration(100.0);
-  //stepper1.moveTo(24);
-  steppers.addStepper(stepper1);
-  
-  stepper2.setMaxSpeed(200.0);
-  stepper2.setSpeed(100.0);
-  //stepper2.setAcceleration(100.0);
-  //stepper2.moveTo(50000);
-  steppers.addStepper(stepper2);
-  positions[0] = 1000;
-  positions[1] = 500;
+  testStep = new Steppers();
+  testStep->addStepper(0, 0x60);
+  //testStep->addStepper(2, 0x60);
 }
 
 void loop()
 {
-  positions[0] += 100;
-  positions[1] += 50;
-  steppers.moveTo(positions);
-  steppers.runSpeedToPosition();
-
+  testStep->setToMove(0x60, 0, 255);
+  testStep->moveTo();
   delay(1000);
   Serial.println("ho");
 }
