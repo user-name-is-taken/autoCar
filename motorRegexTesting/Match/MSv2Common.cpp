@@ -27,7 +27,6 @@ Adafruit_MotorShield *shields [32];
  * This works the same as python [A:B]
  */
 uint8_t substr2num(char *message, int A, int B){
-  Wire.begin();
   char str[(B - A) + 1];
   strncpy(str, message + A, B - A);
   str[B-A] = '\0';

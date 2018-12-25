@@ -51,6 +51,10 @@ class MyAccelStepper: public AccelStepper
 };
 
 
+
+
+
+
 /*
  * Each MultiStepper can contain up to 10 MyAccelStepper objects. 
  * This class wraps MultiStepper to handle these objects
@@ -59,6 +63,7 @@ class Steppers: public MultiStepper{
   public:
     Steppers(){
       curStepperIndex = 0;
+      
       //steppersIndexes [10][2] = new uint8_t [10][2];
     }
     
@@ -154,7 +159,7 @@ class Steppers: public MultiStepper{
     uint8_t steppersIndexes [10][2];//[[shield, stepper], [shield, stepper],...]
     //changing from uint8_t to boolean is pointless because they're both 8bits to the OS.
     uint8_t curStepperIndex;
-    long moves [10] = {0};//see getPos_resetMoves() and moveTo()
+    long moves [10];//see getPos_resetMoves() and moveTo()
     AccelStepper *stepperObjects [10];
     /**
      * This will add a long[] array to the free store (heap). You MUST delete it with delete[].
@@ -163,7 +168,7 @@ class Steppers: public MultiStepper{
      */
     long * getPos_resetMoves(){
       long * posArr = new long [curStepperIndex + 1];// need to put on "free store"
-      for (int i=0; i < curStepperIndex; i++){
+      for (int i=0; i <= curStepperIndex; i++){
         Serial.println(moves[i]);
         posArr[i] = stepperObjects[i]->currentPosition() + moves[i];
         moves[i] = 0;
@@ -178,14 +183,16 @@ Steppers *testStep;
 void setup()
 {  
   Serial.begin(9600);
+  Wire.begin();
   testStep = new Steppers();
-  testStep->addStepper(1, 0x60);
-  //testStep->addStepper(2, 0x60);
+  testStep->addStepper(1,0x60);
+  //testStep->addStepper(0, 0x60);
 }
 
 void loop()
 {
-  testStep->setToMove(0x60, 1, 255);
+  //testStep->setToMove(0x60, 0, 205);
+  testStep->setToMove(0x60, 1,  300);
   testStep->moveTo();
   delay(1000);
   Serial.println("ho");
