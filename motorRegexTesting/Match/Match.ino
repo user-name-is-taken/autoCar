@@ -74,19 +74,21 @@ class Steppers: public MultiStepper{
      * stepperNum: the number
      * with 200 steps
      */
-    void addStepper(uint8_t stepperNumb, uint8_t shield, uint16_t steps_per_rev = 200){
+    void addStepper(uint8_t shield, uint8_t stepperNumb, uint16_t steps_per_rev = 200){
       if(curStepperIndex >= 9){
         //error, too many shields
         Serial.println("too many steppers to add another.");
-      }else if(stepperNumb != 0 and stepperNumb!=1){
+      }else if(stepperNumb != 1 and stepperNumb!=2){
          //Invalid Stepper motor
-         Serial.println("invalid stepper number " + String(stepperNumb));         
+         Serial.print("invalid stepper number " );
+         Serial.println(stepperNumb);         
       }else if(getSavedStepperIndex(shield, stepperNumb) != 255){
          //stepper already added.
          //This will happen in most cases.
          Serial.println("stepper already exists at " +
                         String(getSavedStepperIndex(shield, stepperNumb)));
-         Serial.println("step index: " +String(curStepperIndex));
+         Serial.print("step index: ");
+         Serial.println(curStepperIndex);
       }else if(!shieldConnected(shield)){
         // shield not connected.
          //this is actually redundant in the current form.
@@ -100,7 +102,11 @@ class Steppers: public MultiStepper{
         curStepper.setSpeed(100);
         MultiStepper::addStepper(curStepper);//super class's method
         steppersIndexes[curStepperIndex][0] = shield;
+        Serial.print("add stepper shield = ");
+        Serial.println(shield);
         steppersIndexes[curStepperIndex][1] = stepperNumb;
+        Serial.print("add stepper stepperNumb = ");
+        Serial.println(stepperNumb);
         curStepperIndex++;
       }
     }
@@ -136,6 +142,11 @@ class Steppers: public MultiStepper{
      */
     void setToMove(uint8_t index, long moveAmount){
        moves[index] += moveAmount;
+       Serial.print("setToMove moves[i] =");
+       Serial.println(moves[0]);
+       Serial.print("setToMove index =");
+       Serial.println(index);//this is 255, which is wrong
+       
     }
 
     /**
@@ -143,7 +154,7 @@ class Steppers: public MultiStepper{
      * 
      * works
      */
-    void moveTo(){
+    void myMoveTo(){
       //Serial.println("move to " + String(curStepperIndex));//getting printed as m?
       long * posArr = getPos_resetMoves();
       MultiStepper::moveTo(posArr);
@@ -170,6 +181,9 @@ class Steppers: public MultiStepper{
       long * posArr = new long [curStepperIndex + 1];// need to put on "free store"
       //memcpy(posArr, moves, curStepperIndex + 1);
       for (int i=0; i <= curStepperIndex; i++){
+        Serial.print("getPos_resetMoves Moves[");
+        Serial.print(i);
+        Serial.print("]= ");
         Serial.println(moves[i]);
         //use the memcpy instead of this...
         posArr[i] = stepperObjects[i]->currentPosition() + moves[i];
@@ -179,38 +193,20 @@ class Steppers: public MultiStepper{
     }
 };
 
-
-Steppers *testStep;
-MultiStepper multiStep;
-Adafruit_MotorShield AFMS(0x60);
-Adafruit_StepperMotor *myStep;
-MyAccelStepper curStepper;
+Steppers *myStep;
 
 void setup()
 {  
-  Serial.begin(9600);
   Wire.begin();
-  //testStep = new Steppers();
-  //testStep->addStepper(0, 0x60);
-  //testStep->addStepper(1, 0x60);
-  AFMS.begin();
-  myStep = AFMS.getStepper(200, 1);
-  
-  curStepper(myStep);// create a MyAccelStepper named curStepper
-  curStepper.setMaxSpeed(200.0);
-  curStepper.setSpeed(100);
-  //MultiStepper multiStep();
-  multiStep.addStepper(curStepper);//super class's method
+  Serial.begin(9600);
+  myStep = new Steppers();
+  myStep->addStepper(0x60, 1);
 }
-long pos[1];
+
 void loop()
 {
-  pos[0]+=10;
-  multiStep.moveTo(pos);
-  multiStep.runSpeedToPosition();
-  //testStep->setToMove(0x60, 1, -205);
-  //testStep->setToMove(0x60, 0,  -300);
-  //testStep->moveTo();
-  delay(1000);
+  myStep->setToMove(0x60, 1, 200);
+  myStep->myMoveTo();
+  delay(9000);
   Serial.println("ho");
 }
