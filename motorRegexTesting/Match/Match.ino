@@ -110,13 +110,13 @@ class Steppers: public MultiStepper{
      * and is this stepper motor. 
      * 
      * Returns: the index in the array if the motor is in the array, otherwise it returns 255
+     * 
+     * works
     */
     uint8_t getSavedStepperIndex(uint8_t shield, uint8_t stepperNumb){
       for(int index = 0; index <= curStepperIndex; index++){
         if(steppersIndexes[index][0] == shield 
           && steppersIndexes[index][1] == stepperNumb){
-            Serial.print("Index at: ");
-            Serial.println(index);
           return index; 
         }
       }
@@ -125,6 +125,7 @@ class Steppers: public MultiStepper{
 
     /**
      * Tells the motor to move moveAmount ticks relative to the position it's in when it's executed.
+     * 
      */
     void setToMove(uint8_t shield, uint8_t stepperNumb, long moveAmount){
        setToMove(getSavedStepperIndex(shield, stepperNumb), moveAmount);
@@ -139,15 +140,12 @@ class Steppers: public MultiStepper{
 
     /**
      * Calls moveTo with the stored possitions
+     * 
+     * works
      */
     void moveTo(){
       //Serial.println("move to " + String(curStepperIndex));//getting printed as m?
       long * posArr = getPos_resetMoves();
-      
-      for(int pos = 0; pos < curStepperIndex; pos++){
-        Serial.println("here");
-        Serial.println(posArr[pos]);
-      }
       MultiStepper::moveTo(posArr);
       MultiStepper::runSpeedToPosition();
       delete[] posArr;
@@ -162,15 +160,18 @@ class Steppers: public MultiStepper{
     uint8_t curStepperIndex;
     long moves [10];//see getPos_resetMoves() and moveTo()
     AccelStepper *stepperObjects [10];
+    
     /**
      * This will add a long[] array to the free store (heap). You MUST delete it with delete[].
      * 
-     * 
+     * works
      */
     long * getPos_resetMoves(){
       long * posArr = new long [curStepperIndex + 1];// need to put on "free store"
+      //memcpy(posArr, moves, curStepperIndex + 1);
       for (int i=0; i <= curStepperIndex; i++){
         Serial.println(moves[i]);
+        //use the memcpy instead of this...
         posArr[i] = stepperObjects[i]->currentPosition() + moves[i];
         moves[i] = 0;
       }
@@ -180,21 +181,36 @@ class Steppers: public MultiStepper{
 
 
 Steppers *testStep;
+MultiStepper multiStep;
+Adafruit_MotorShield AFMS(0x60);
+Adafruit_StepperMotor *myStep;
+MyAccelStepper curStepper;
 
 void setup()
 {  
   Serial.begin(9600);
   Wire.begin();
-  testStep = new Steppers();
-  testStep->addStepper(0,0x60);
-  testStep->addStepper(1, 0x60);
+  //testStep = new Steppers();
+  //testStep->addStepper(0, 0x60);
+  //testStep->addStepper(1, 0x60);
+  AFMS.begin();
+  myStep = AFMS.getStepper(200, 1);
+  
+  curStepper(myStep);// create a MyAccelStepper named curStepper
+  curStepper.setMaxSpeed(200.0);
+  curStepper.setSpeed(100);
+  //MultiStepper multiStep();
+  multiStep.addStepper(curStepper);//super class's method
 }
-
+long pos[1];
 void loop()
 {
-  testStep->setToMove(0x60, 1, 205);
-  testStep->setToMove(0x60, 0,  300);
-  testStep->moveTo();
-  delay(100);
+  pos[0]+=10;
+  multiStep.moveTo(pos);
+  multiStep.runSpeedToPosition();
+  //testStep->setToMove(0x60, 1, -205);
+  //testStep->setToMove(0x60, 0,  -300);
+  //testStep->moveTo();
+  delay(1000);
   Serial.println("ho");
 }

@@ -44,7 +44,6 @@ boolean shieldConnected(uint8_t shieldAddr){
   int end = Wire.endTransmission(true);//end is always 4?
   //return shieldAddressValidator(shieldAddr); (A customization I added 
   //to the Adafruit_MotorShield.h library that doesn't work)
-  Serial.println(end);
   return end == 0;
 }
 
@@ -77,7 +76,6 @@ uint8_t getMotorShield(char *message){
       //This describes the pointer magic here:
       //https://stackoverflow.com/questions/5467999/c-new-pointer-from-pointer-to-pointer#5468009
       shields[addr - 96] = new Adafruit_MotorShield(addr);
-      //*shields[addr - 96] = Adafruit_MotorShield(addr);
       shields[addr - 96]->begin();
    }
    return (uint8_t)(addr - 96);
