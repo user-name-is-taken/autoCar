@@ -76,8 +76,8 @@ uint8_t getMotorShield(char *message){
       //makes sure it's a null pointer before setting it
       //This describes the pointer magic here:
       //https://stackoverflow.com/questions/5467999/c-new-pointer-from-pointer-to-pointer#5468009
-      shields[addr - 96] = new Adafruit_MotorShield;
-      *shields[addr - 96] = Adafruit_MotorShield(addr);
+      shields[addr - 96] = new Adafruit_MotorShield(addr);
+      //*shields[addr - 96] = Adafruit_MotorShield(addr);
       shields[addr - 96]->begin();
    }
    return (uint8_t)(addr - 96);

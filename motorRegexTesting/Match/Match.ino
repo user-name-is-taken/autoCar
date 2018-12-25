@@ -96,6 +96,8 @@ class Steppers: public MultiStepper{
         Adafruit_StepperMotor *myStep = AFMS.getStepper(steps_per_rev, stepperNumb);
         
         MyAccelStepper curStepper(myStep);// create a MyAccelStepper named curStepper
+        curStepper.setMaxSpeed(200.0);
+        curStepper.setSpeed(100);
         MultiStepper::addStepper(curStepper);//super class's method
         steppersIndexes[curStepperIndex][0] = shield;
         steppersIndexes[curStepperIndex][1] = stepperNumb;
@@ -141,12 +143,11 @@ class Steppers: public MultiStepper{
     void moveTo(){
       //Serial.println("move to " + String(curStepperIndex));//getting printed as m?
       long * posArr = getPos_resetMoves();
-      /*
+      
       for(int pos = 0; pos < curStepperIndex; pos++){
         Serial.println("here");
         Serial.println(posArr[pos]);
       }
-      */
       MultiStepper::moveTo(posArr);
       MultiStepper::runSpeedToPosition();
       delete[] posArr;
@@ -185,15 +186,15 @@ void setup()
   Serial.begin(9600);
   Wire.begin();
   testStep = new Steppers();
-  testStep->addStepper(1,0x60);
-  //testStep->addStepper(0, 0x60);
+  testStep->addStepper(0,0x60);
+  testStep->addStepper(1, 0x60);
 }
 
 void loop()
 {
-  //testStep->setToMove(0x60, 0, 205);
-  testStep->setToMove(0x60, 1,  300);
+  testStep->setToMove(0x60, 1, 205);
+  testStep->setToMove(0x60, 0,  300);
   testStep->moveTo();
-  delay(1000);
+  delay(100);
   Serial.println("ho");
 }
