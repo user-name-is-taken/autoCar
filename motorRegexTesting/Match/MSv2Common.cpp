@@ -57,16 +57,13 @@ boolean shieldConnected(uint8_t shieldAddr){
  * 
  * //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
  */
-uint8_t getMotorShield(char *message){
+uint8_t getMotorShield(uint8_t addr){
 // * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
 // the above might help with the conversion
 
 //pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
 //strchr: http://www.cplusplus.com/reference/cstring/strchr/
   //(int) "_" to make the implicit promotion explicit
-   char *first = strchr(message, (int) '_');
-   char *second = strchr( first + 1, (int) '_');
-   uint8_t addr = substr2num(message, first + 1 - message , second - message);
    if(addr < 96 || addr > 127){
      return -1;
    }else if(!shieldConnected(addr)){
@@ -79,4 +76,27 @@ uint8_t getMotorShield(char *message){
       shields[addr - 96]->begin();
    }
    return (uint8_t)(addr - 96);
+};
+
+/*
+ * Converts the message from the Serial port to its shield's int location 
+ * in the shields array.
+ * 
+ * If a motor shield doesn't exist, it creates it before returning the int
+ * 
+ * Note: 0x70 is the broadcast
+ * 
+ * //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
+ */
+uint8_t getMotorShield(char *message){
+// * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
+// the above might help with the conversion
+
+//pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
+//strchr: http://www.cplusplus.com/reference/cstring/strchr/
+  //(int) "_" to make the implicit promotion explicit
+   char *first = strchr(message, (int) '_');
+   char *second = strchr( first + 1, (int) '_');
+   uint8_t addr = substr2num(message, first + 1 - message , second - message);
+   return getMotorShield(addr);
 };
