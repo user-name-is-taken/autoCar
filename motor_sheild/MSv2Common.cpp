@@ -41,11 +41,42 @@ uint8_t substr2num(char *message, int A, int B){
  */
 boolean shieldConnected(uint8_t shieldAddr){
   Wire.beginTransmission(shieldAddr);
-  int end = Wire.endTransmission(true);
+  int end = Wire.endTransmission(true);//end is always 4?
   //return shieldAddressValidator(shieldAddr); (A customization I added 
   //to the Adafruit_MotorShield.h library that doesn't work)
   return end == 0;
 }
+
+/*
+ * Converts the message from the Serial port to its shield's int location 
+ * in the shields array.
+ * 
+ * If a motor shield doesn't exist, it creates it before returning the int
+ * 
+ * Note: 0x70 is the broadcast
+ * 
+ * //https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/stacking-shields
+ */
+uint8_t getMotorShield(uint8_t addr){
+// * https://stackoverflow.com/questions/45632093/convert-char-to-uint8-t-array-with-a-specific-format-in-c
+// the above might help with the conversion
+
+//pointers: https://stackoverflow.com/questions/28778625/whats-the-difference-between-and-in-c
+//strchr: http://www.cplusplus.com/reference/cstring/strchr/
+  //(int) "_" to make the implicit promotion explicit
+   if(addr < 96 || addr > 127){
+     return -1;
+   }else if(!shieldConnected(addr)){
+     return -2;
+   }else if(!shields[addr - 96]){
+      //makes sure it's a null pointer before setting it
+      //This describes the pointer magic here:
+      //https://stackoverflow.com/questions/5467999/c-new-pointer-from-pointer-to-pointer#5468009
+      shields[addr - 96] = new Adafruit_MotorShield(addr);
+      shields[addr - 96]->begin();
+   }
+   return (uint8_t)(addr - 96);
+};
 
 /*
  * Converts the message from the Serial port to its shield's int location 
@@ -67,17 +98,5 @@ uint8_t getMotorShield(char *message){
    char *first = strchr(message, (int) '_');
    char *second = strchr( first + 1, (int) '_');
    uint8_t addr = substr2num(message, first + 1 - message , second - message);
-   if(addr < 96 || addr > 127){
-     return -1;
-   }else if(!shieldConnected(addr)){
-     return -2;
-   }else if(!shields[addr - 96]){
-      //makes sure it's a null pointer before setting it
-      //This describes the pointer magic here:
-      //https://stackoverflow.com/questions/5467999/c-new-pointer-from-pointer-to-pointer#5468009
-      shields[addr - 96] = new Adafruit_MotorShield;
-      *shields[addr - 96] = Adafruit_MotorShield(addr);
-      shields[addr - 96]->begin();
-   }
-   return (uint8_t)(addr - 96);
+   return getMotorShield(addr);
 };

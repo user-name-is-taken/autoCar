@@ -35,4 +35,6 @@ boolean shieldConnected(uint8_t shieldAddr);
 
 uint8_t getMotorShield(char *message);
 
+uint8_t getMotorShield(uint8_t message);
+
 #endif
