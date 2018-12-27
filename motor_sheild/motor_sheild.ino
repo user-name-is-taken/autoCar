@@ -10,7 +10,7 @@ Make sure your line separator is set to newline, not carrage return
 */
 
 #include <Wire.h>
-//#include "MSv2Motors.h"
+#include "MSv2Motors.h"
 #include "MSv2Steppers.h"
 
 String toWrite;
