@@ -246,12 +246,14 @@ void setup()
   myStep = new Steppers();
   //myStep->addStepper(0x60, 1);
   myStep->addStepper(0x60, 2);
+  myStep->addStepper(0x60, 1);
 }
 
 void loop()
 {
   //myStep->setToMove(0x60, 1, 200);
   myStep->setToMove(0x60, 2, 100);
+  myStep->setToMove(0x60, 1, 200);
   myStep->myMoveTo();
   
   delay(5000);
