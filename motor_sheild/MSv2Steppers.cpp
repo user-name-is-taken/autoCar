@@ -14,7 +14,7 @@
 
 /*TESTS:
  * MSv2Steppers_60_move_1_+0FF_group_00
- * MSv2Steppers_60_move_0_+0FF_group_00
+ * MSv2Steppers_60_move_2_+0FF_group_00
  * 
  * MSv2Steppers_execute_group_00 
  * 
@@ -60,8 +60,7 @@ class MyAccelStepper: public AccelStepper
             AccelStepper::step0(step);
           }else{
             (void)(step);
-            Serial.print("step0 speed:");
-            Serial.println(speed());
+            Serial.println("step0");
             if(speed() > 0){
               _myStepper->onestep(FORWARD, DOUBLE);
             }else{
@@ -239,7 +238,7 @@ void setToMove(char *message, int shieldInt, String *toWrite){
     if(groups[group] == NULL){
       groups[group] = new Steppers();
     }
-    groups[group]->addStepper(stepperNumb, shieldInt);
+    groups[group]->addStepper(shieldInt, stepperNumb);
     //Adds the stepper if it doesn't exist.
     groups[group]->setToMove(shieldInt, stepperNumb, moveAmount);
     //Move all the stepper motors the required amount.
@@ -284,7 +283,7 @@ boolean checkMSv2Steppers(char *message, String *toWrite){
       }
     }else if(ms.Match(EXE_PATTERN) > 0){
       //call run
-      groups[substr2num(message, EXE_GROUP_START, EXE_GROUP_END)]->moveTo();
+      groups[substr2num(message, EXE_GROUP_START, EXE_GROUP_END)]->myMoveTo();
       toWrite->concat(": Move success");
     }else{
       toWrite->concat(": No matching command found.");
