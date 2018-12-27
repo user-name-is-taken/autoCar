@@ -78,11 +78,12 @@ class Steppers: public MultiStepper{
       
       //steppersIndexes = new uint8_t [10][2];
     }
-    /*
+    
     ~Steppers(){
       delete[] steppersIndexes;
+      delete[] stepperObjects;
     }
-    */
+    
 
     /**
      * Finds the index of stepper motor in the class's array that's on this shield,
