@@ -82,6 +82,7 @@ class Steppers: public MultiStepper{
     ~Steppers(){
       delete[] steppersIndexes;
       delete[] stepperObjects;
+      //curStepperIndex = 0;
     }
     
 
