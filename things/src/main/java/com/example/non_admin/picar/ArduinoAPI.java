@@ -3,7 +3,7 @@ package com.example.non_admin.picar;
 import android.content.res.Resources;
 
 public abstract class ArduinoAPI {
-	private String name;
+	protected String name;
 	Device dev;
 	
 	/**
@@ -35,5 +35,16 @@ public abstract class ArduinoAPI {
 	 * @return This will return true if the message was meant for and processed by this API.
 	 */
 	abstract boolean receive(String message);
+	//maybe when you get "ready", you should set a flag?
+
+
+	/**
+	 * Converts an int to a String representing the hex value of the int
+	 * @param decimal an int to be converted to a hex string
+	 * @return a string representing the decimal
+	 */
+	public static String intToHex(int decimal){
+		return Integer.toHexString(decimal);
+	}
 
 }
