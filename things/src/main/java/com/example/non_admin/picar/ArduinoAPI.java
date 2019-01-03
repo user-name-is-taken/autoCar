@@ -38,13 +38,5 @@ public abstract class ArduinoAPI {
 	//maybe when you get "ready", you should set a flag?
 
 
-	/**
-	 * Converts an int to a String representing the hex value of the int
-	 * @param decimal an int to be converted to a hex string
-	 * @return a string representing the decimal
-	 */
-	public static String intToHex(int decimal){
-		return Integer.toHexString(decimal);
-	}
 
 }
