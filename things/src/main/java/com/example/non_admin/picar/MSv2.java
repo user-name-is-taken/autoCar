@@ -1,5 +1,9 @@
 package com.example.non_admin.picar;
 
+import android.util.Log;
+
+import static android.content.ContentValues.TAG;
+
 /**
  * This class links MSv2Motors and MSv2Steppers using an array of Shields
  * so DC motors and stepper motors co-exist peacefully.
@@ -34,6 +38,8 @@ public class MSv2 extends ArduinoAPI {
             this.allShields[shieldIndex] = new Shield(this.dev, shieldIndex);
         }else{
             //error, shield already exists
+            Log.w(TAG, "MSv2.setShield(" + shieldIndex + ") warning," +
+                    " shield already exists");
         }
     }
 
