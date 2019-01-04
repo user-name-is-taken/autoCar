@@ -74,6 +74,17 @@ public class Shield {
     }
 
     /**
+     * setDCMotor where force is false
+     * @param motorNumb tells which motor to get.
+     * @return The motor at that index
+     * @see this.setDCMotor(int, boolean) This is just setDCMotor(int, false).
+     * It's just a pass though functon
+     */
+    public MSv2Motors setDCMotor(int motorNumb){
+        return setDCMotor(motorNumb, false);
+    }
+
+    /**
      * TODO: write this function
      * @param stepNumb
      * @param force
@@ -81,7 +92,7 @@ public class Shield {
      */
     public MSv2Steppers setStepperMotor(int stepNumb, boolean force){
         stepNumb --;
-
+        return null;
     }
 
     /**
@@ -93,15 +104,7 @@ public class Shield {
         return this.stepperMotors[stepNumb - 1];
     }
 
-    /**
-     *
-     * @param motorNumb tells which motor to get.
-     * @return The motor at that index
-     * @see this.setDCMotor(int, boolean)
-     */
-    public MSv2Motors setDCMotor(int motorNumb){
-        return setDCMotor(motorNumb, false);
-    }
+
 
 
 }
