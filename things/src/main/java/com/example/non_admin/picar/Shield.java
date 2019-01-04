@@ -29,14 +29,17 @@ public class Shield {
 
     public MSv2Motors getDCMotor(int motorNumb){
         motorNumb --; // decrementing motorNumb for indexing.
-        if(motorNumb < 0 || motorNumb > 3 || dcMotors[motorNumb] == null){
-            Log.e(TAG, "Shield " + getI2Caddr() + " has no motor at the index "
-                    + motorNumb);
-            throw new InvalidParameterException("Shield " + getI2Caddr()
+        if(motorNumb < 0 || motorNumb > 3 || dcMotors[motorNumb] == null) {
+            InvalidParameterException e = new InvalidParameterException("Shield " + getI2Caddr()
                     + " has no motor at the index " + motorNumb);
-        }else{
-            return this.dcMotors[motorNumb];
+            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            throw e;
+        }else if(dcMotors[motorNumb] == null){
+            Log.w(TAG, "There isn't a DC motor on shield " + getI2Caddr() +
+            " at position " + (motorNumb + 1) + " in Shields.getDCMotor.");
+
         }
+        return this.dcMotors[motorNumb];
     }
 
     /**
@@ -49,25 +52,25 @@ public class Shield {
     public MSv2Motors setDCMotor (int motorNumb, boolean force){
         motorNumb --; // decrementing motorNumb for indexing purposes.
         if(motorNumb < 0 || motorNumb > 3){
-            Log.e(TAG, "Shield " + getI2Caddr() + " has no motor at the index "
-                    + motorNumb);
-            throw new InvalidParameterException("Shield " + getI2Caddr()
-                    + " has no motor at the index " + motorNumb);
+            IndexOutOfBoundsException e = new IndexOutOfBoundsException("Invalid motorNumb, " +
+                    (motorNumb + 1) + ", passed to shield.setDCMotor on shield " + getI2Caddr());
+            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            throw e;
         }else if(dcMotors[motorNumb] != null){
             Log.w(TAG, "Shield " + getI2Caddr() + " already has a motor at the index "
                     + motorNumb);
             //not allowing a force reset here, because that should be a function of the MSv2Motors itself
         }else if(!force && stepperMotors[(motorNumb)/2] != null){
-            Log.e(TAG, "Shield " + getI2Caddr() + " already has a stepper motor at position" +
-                    motorNumb/2 + " preventing you from having a MSv2Motors at position" + motorNumb);
-            throw new InvalidParameterException("Shield " + getI2Caddr() +
+            InvalidParameterException e = new InvalidParameterException("Shield " + getI2Caddr() +
                     " already has a stepper motor at position" + motorNumb/2 +
                     " preventing you from having a MSv2Motors at position" + motorNumb);
-        }else if(force){
-            stepperMotors[motorNumb/2] = null;
+            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            throw e;
         }else{
+            if(force) {
+                stepperMotors[motorNumb / 2] = null;
+            }
             dcMotors[motorNumb] = new MSv2Motors(this.dev, this.index, motorNumb);
-            //TODO: make these parameters right
             //MSv2Motors(Device dev, int shieldIndex, int motorIndex)
         }
         return dcMotors[motorNumb];
@@ -85,23 +88,60 @@ public class Shield {
     }
 
     /**
-     * TODO: write this function
+     * Creates a stepper motor and adds it to this.stepperMotors
      * @param stepNumb
      * @param force
      * @return
      */
     public MSv2Steppers setStepperMotor(int stepNumb, boolean force){
         stepNumb --;
-        return null;
+        if(stepNumb < 0 || stepNumb > 1){
+            IndexOutOfBoundsException e = new IndexOutOfBoundsException("Shield " + getI2Caddr()
+                    + " has no stepper motor at the index " + stepNumb);
+            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            throw e;
+        }else if(this.stepperMotors[stepNumb] != null){
+            Log.w(TAG, "Shield " + getI2Caddr() + " already has a stepper motor at the index "
+                    + stepNumb);
+            //not allowing a force reset here, because that should be a function of the MSv2Motors itself
+        }else if(!force && stepperMotors[(stepNumb)*2] != null &&
+                stepperMotors[((stepNumb)*2) + 1 ] != null){
+            InvalidParameterException e = new InvalidParameterException("Shield " + getI2Caddr() +
+                    "  has DC motor at position" + stepNumb * 2 + " or " + ((stepNumb * 2) + 1) +
+                    " preventing you from having a stepper at position" + stepNumb);
+            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            throw e;
+        }else{
+            if(force){
+                dcMotors[stepNumb * 2] = null;
+                dcMotors[(stepNumb * 2) + 1] = null;
+            }
+            stepperMotors[stepNumb] = new MSv2Steppers(this.dev, this, stepNumb);
+            //MSv2Motors(Device dev, int shieldIndex, int motorIndex)
+        }
+        return stepperMotors[stepNumb];
     }
 
     /**
-     * TODO: write this function
-     * @param stepNumb
-     * @return
+     * This function gets a MSv2Stepper object that can be used to manipulate stepper motors
+     * on this board.
+     * @param stepNumb an int (1 or 2) corresponding to the motor
+     * @return an MSv2Stepper motor
+     * @see MSv2Steppers(Device, Shield, int) for how stepper motors are constructed.
      */
     public MSv2Steppers getStepperMotor(int stepNumb){
-        return this.stepperMotors[stepNumb - 1];
+        stepNumb --;
+        if(stepNumb < 0 || stepNumb > 1) {
+            InvalidParameterException e = new InvalidParameterException(
+                    "Invalid stepNumb, " + (1 + stepNumb) +
+                            ", passed to shield.getStepperMotor on shield" + getI2Caddr());
+            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            throw e;
+        }else if(stepperMotors[stepNumb] == null){
+            Log.w(TAG, "There isn't a stepper motor at position " + (stepNumb + 1) +
+            " on shield " + getI2Caddr() + " in Shield.getStepperMotor(int).");
+        }
+        return this.stepperMotors[stepNumb];
     }
 
 
