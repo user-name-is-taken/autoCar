@@ -31,13 +31,26 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "MainActivity started.");
         setContentView(R.layout.activity_main);
         UsbDevice device = (UsbDevice) getIntent().getParcelableExtra(UsbManager.EXTRA_DEVICE);
         if(device == null){
             Log.e(TAG, "no usb connected");
         }else{
             if(!Device.devSet.contains(device)){
-                new Device(device);
+                Device myDev = new Device(device);
+                MSv2 myArduino = new MSv2(myDev);
+                myArduino.setShield(0);
+                MSv2Motors motor1 = myArduino.getShield(0).setDCMotor(1);
+                MSv2Steppers step2 = myArduino.getShield(0).setStepperMotor(2);
+
+                motor1.setSpeed(100);
+                step2.setMoveAmount(100, 0);
+                motor1.setDirection(true);
+                myArduino.executeGroup(0);
+
+
+
             }
         }
     }

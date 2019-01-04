@@ -3,7 +3,7 @@ package com.example.non_admin.picar;
 import android.content.res.Resources;
 
 public abstract class ArduinoAPI {
-	private String name;
+	protected String name;
 	Device dev;
 	
 	/**
@@ -35,5 +35,8 @@ public abstract class ArduinoAPI {
 	 * @return This will return true if the message was meant for and processed by this API.
 	 */
 	abstract boolean receive(String message);
+	//maybe when you get "ready", you should set a flag?
+
+
 
 }

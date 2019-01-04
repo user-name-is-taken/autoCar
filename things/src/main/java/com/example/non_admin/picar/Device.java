@@ -179,6 +179,7 @@ public class Device{
 	public void addAPI(String name, ArduinoAPI api){
 		APIs.put(name, api);//maybe check if name is already in APIs?
 	}
+
 	/**
 	 * 	This resolves the name into a class assuming the name and the class are the same
 	 * 	MAKE SURE 'name' IN THE ARDUINO API IS THE SAME AS THIS!!!
@@ -205,7 +206,7 @@ public class Device{
 	private void parseAPIs(String message){
 		String[] apis = message.split("_");
 		this.setName(apis[1]);//the name. remember, it starts with "APIs"
-		for(int i=2; i < apis.length; i++){
+		for(int i=1; i < apis.length; i++){
 			getAPIfromName(apis[i]);
 		}
 	}
