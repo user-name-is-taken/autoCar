@@ -123,6 +123,16 @@ public class Shield {
     }
 
     /**
+     * just a pass through function
+     * @param stepNumb
+     * @return
+     * @see this.setStepperMotor(int, boolean)
+     */
+    public MSv2Steppers setStepperMotor(int stepNumb){
+        return setStepperMotor(stepNumb, false);
+    }
+
+    /**
      * This function gets a MSv2Stepper object that can be used to manipulate stepper motors
      * on this board.
      * @param stepNumb an int (1 or 2) corresponding to the motor
