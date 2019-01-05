@@ -27,6 +27,18 @@ public class MSv2 extends ArduinoAPI {
         return false;
     }
 
+    @Override
+    void startupRoutine() {
+        this.setShield(0);
+        MSv2Motors motor1 = this.getShield(0).setDCMotor(1);
+        MSv2Steppers step2 = this.getShield(0).setStepperMotor(2);
+
+        motor1.setSpeed(100);
+        step2.setMoveAmount(100, 0);
+        motor1.setDirection(true);
+        this.executeGroup(0);
+    }
+
     /**
      * This sets up a shield at the specified index
      * These indexes correspond to the I2C addresses.

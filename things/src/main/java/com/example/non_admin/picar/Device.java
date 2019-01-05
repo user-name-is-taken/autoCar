@@ -40,8 +40,8 @@ import static android.support.v4.content.ContextCompat.getSystemService;
  */
 public class Device{
     private static UsbManager usbManager;
-    public static HashSet<Device> devSet;
-    public static HashMap<String, Device> devName;
+    public static HashSet<Device> devSet = new HashSet<>();
+    public static HashMap<String, Device> devName = new HashMap<>();
     private static final String TAG = "Device";
 
 	private String name;
@@ -64,6 +64,7 @@ public class Device{
 	public Device(UsbDevice mDevice){
 		// add to devSet and devName in here
 		this.mDevice = mDevice;
+		this.APIs = new HashMap<String, ArduinoAPI>();
 
         callback = new UsbSerialInterface.UsbReadCallback() {
             /**
@@ -90,9 +91,9 @@ public class Device{
                 }
 */
                     //call addAPIs here
-					if(dataUtf8.startsWith("APIs"))
+					if(dataUtf8.startsWith("APIs")) {
 						parseAPIs(dataUtf8);// remember, this is a different class
-					else {
+					}else {
 						for (ArduinoAPI api : APIs.values()) {
 							if (api.receive(dataUtf8))
 								break;//the callback was for the api
@@ -167,7 +168,7 @@ public class Device{
 		return this.mDevice;
 	}
 
-	
+
 	/**
 	 * This adds an API the connected arduino can use. For example the motor API can control motors
 	 * @param name A unique identifier for the API name.
@@ -180,6 +181,10 @@ public class Device{
 		APIs.put(name, api);//maybe check if name is already in APIs?
 	}
 
+	public ArduinoAPI getAPI(String name){
+		return APIs.get(name);
+	}
+
 	/**
 	 * 	This resolves the name into a class assuming the name and the class are the same
 	 * 	MAKE SURE 'name' IN THE ARDUINO API IS THE SAME AS THIS!!!
@@ -189,8 +194,9 @@ public class Device{
 		try{
 			Package pkg = this.getClass().getPackage();
 			Class cls = Class.forName(pkg.getName() + name);
-			return (ArduinoAPI) cls.getConstructor(String.class, Device.class)
+			ArduinoAPI api = (ArduinoAPI) cls.getConstructor(String.class, Device.class)
 					.newInstance(name, this);
+			return api;
 		}catch(Exception e){
 			Log.e(TAG, "getAPIfromName can't resolve name");
 			return null;
@@ -207,7 +213,9 @@ public class Device{
 		String[] apis = message.split("_");
 		this.setName(apis[1]);//the name. remember, it starts with "APIs"
 		for(int i=1; i < apis.length; i++){
-			getAPIfromName(apis[i]);
+			ArduinoAPI curAPI = getAPIfromName(apis[i]);
+			if(curAPI != null)
+				this.APIs.put(apis[i], curAPI);
 		}
 	}
 
@@ -239,8 +247,10 @@ public class Device{
 	 * This sets a static UsbManager for this class because the connect methods need it
 	 * @param usb The UsbManager
 	 */
-	public static void setUsbManager(UsbManager usb){
-		usbManager = usb;
+	public static void setUsbManager(UsbManager usb, boolean force){
+		if(usbManager == null || force){
+			usbManager = usb;
+		}
 	}
 
 	/**

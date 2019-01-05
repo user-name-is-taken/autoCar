@@ -17,6 +17,7 @@ public abstract class ArduinoAPI {
 		setAPIname();
 		dev.addAPI(this.getAPIname(), this);
 		this.dev = dev;
+		startupRoutine();
 	}
 
 	public String getAPIname(){
@@ -36,6 +37,12 @@ public abstract class ArduinoAPI {
 	 */
 	abstract boolean receive(String message);
 	//maybe when you get "ready", you should set a flag?
+
+	/**
+	 * Just a startup routine ArduinoAPIs must implement so you know they're working.
+	 * You could leave this blank, but that would be dumb
+	 */
+	abstract void startupRoutine();
 
 
 

@@ -1,6 +1,7 @@
 package com.example.non_admin.picar;
 
 import android.app.Activity;
+import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
@@ -38,20 +39,11 @@ public class MainActivity extends Activity {
             Log.e(TAG, "no usb connected");
         }else{
             if(!Device.devSet.contains(device)){
+                Device.setUsbManager((UsbManager) getSystemService(Context.USB_SERVICE), false);
                 Device myDev = new Device(device);
-                MSv2 myArduino = new MSv2(myDev);
-                myArduino.setShield(0);
-                MSv2Motors motor1 = myArduino.getShield(0).setDCMotor(1);
-                MSv2Steppers step2 = myArduino.getShield(0).setStepperMotor(2);
-
-                motor1.setSpeed(100);
-                step2.setMoveAmount(100, 0);
-                motor1.setDirection(true);
-                myArduino.executeGroup(0);
-
-
 
             }
         }
+        //todo: add a disconnect
     }
 }
