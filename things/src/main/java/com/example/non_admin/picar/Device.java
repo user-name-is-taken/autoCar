@@ -1,6 +1,8 @@
 package com.example.non_admin.picar;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbDeviceConnection;
@@ -38,82 +40,105 @@ import static android.support.v4.content.ContextCompat.getSystemService;
  * @author pi
  *
  */
-public class Device{
-    private static UsbManager usbManager;
-    public static HashSet<Device> devSet = new HashSet<>();
-    public static HashMap<String, Device> devName = new HashMap<>();
-    private static final String TAG = "Device";
+public class Device {
+	private static UsbManager usbManager;
+	public static HashSet<Device> devSet = new HashSet<>();
+	public static HashMap<String, Device> devName = new HashMap<>();
+	private static final String TAG = MainActivity.class.getSimpleName();
 
 	private String name;
 	private HashMap<String, ArduinoAPI> APIs;
 	// make a singleton device manager
 	private UsbDevice mDevice;
-    private UsbDeviceConnection connection;
-    private UsbSerialDevice serialDevice;
-    private String buffer = ""; // delete this?
+	private UsbDeviceConnection connection;
+	private UsbSerialDevice serialDevice;
+	private String buffer = ""; // delete this?
 
-    //These store the devices
+	//These store the devices
 
 
-    private UsbSerialInterface.UsbReadCallback callback;
+	private UsbSerialInterface.UsbReadCallback callback;
+
+	private final BroadcastReceiver usbDetachedReceiver;
+
+	private class myUSB_BroadcastReceiver extends android.content.BroadcastReceiver {
+		public int PID;
+		public int VID;
+		public myUSB_BroadcastReceiver(int VID, int PID){
+			this.PID = PID;
+			this.VID = VID;
+		}
+		public void onReceive(Context context, Intent intent) {
+			String action = intent.getAction();
+
+			if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
+				UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+				if (device != null && this.PID == device.getProductId()
+						&& this.VID == device.getVendorId()) {
+					//device.getVendorId() == USB_VENDOR_ID && device.getProductId() == USB_PRODUCT_ID
+					Log.i(TAG, "USB device detached");
+					stopUsbConnection();
+				}
+			}
+		}
+	}
+	
+
+	private class myCallback implements UsbSerialInterface.UsbReadCallback {
+		/**
+		 * This message is called when a device sends a message to the pi
+		 * <p>
+		 * If an API gets a message and can process it, it will return true.
+		 *
+		 * @param data - the message received.
+		 *             TODO: get device name and APIs from the device
+		 */
+		@Override
+		public void onReceivedData(byte[] data) {
+			try {
+				Log.d(TAG, "data received!");
+				String dataUtf8 = new String(data, "UTF-8");
+				buffer += dataUtf8;
+				int index;
+				while ((index = buffer.indexOf('\n')) != -1) {
+					final String dataStr = buffer.substring(0, index + 1).trim();
+					buffer = buffer.length() == index ? "" : buffer.substring(index + 1);
+					onSerialDataReceived(dataStr);//I changed the way this is run.
+					// It was called inside a runOnUiThread() anonymous class
+				}
+			} catch (UnsupportedEncodingException e) {
+				Log.e(TAG, "Error receiving USB data", e);
+			}
+		}
+	}
+
+
 
 	/**
 	 * constructor
+	 *
 	 * @param mDevice
 	 */
-	public Device(UsbDevice mDevice){
+	public Device(UsbDevice mDevice) {
 		// add to devSet and devName in here
 		this.mDevice = mDevice;
 		this.APIs = new HashMap<String, ArduinoAPI>();
-
-        callback = new UsbSerialInterface.UsbReadCallback() {
-            /**
-             * This message is called when a device sends a message to the pi
-             *
-             * If an API gets a message and can process it, it will return true.
-             * @param data - the message received.
-             * TODO: get device name and APIs from the device
-             */
-            @Override
-            public void onReceivedData(byte[] data) {
-                try {
-
-                    String dataUtf8 = new String(data, "UTF-8");
-                    Log.i(TAG, "Data received: " + dataUtf8);
-/*
-                buffer += dataUtf8;
-
-                int index;
-                while ((index = buffer.indexOf('\n')) != -1) {
-                    String dataStr = buffer.substring(0, index + 1).trim();
-                    buffer = buffer.length() == index ? "" : buffer.substring(index + 1);
-                    Log.d(TAG, "data received");
-                }
-*/
-                    //call addAPIs here
-					if(dataUtf8.startsWith("APIs")) {
-						parseAPIs(dataUtf8);// remember, this is a different class
-					}else {
-						for (ArduinoAPI api : APIs.values()) {
-							if (api.receive(dataUtf8))
-								break;//the callback was for the api
-						}
-					}
-                } catch (UnsupportedEncodingException e) {
-                    Log.e(TAG, "Error receiving USB data", e);
-                }
-            }
-
-        };
-		try{
+		callback = new myCallback();
+		usbDetachedReceiver = new myUSB_BroadcastReceiver(mDevice.getVendorId(),
+				mDevice.getProductId());
+		try {
 			this.connect();
 			devSet.add(this);
-            this.serialDevice.read(callback);//adding a callback to the connection
-			this.serialDevice.write("APIs".getBytes());
-		}catch(Exception e){
+			this.serialDevice.read(callback);//adding a callback to the connection
+			this.send("APIs");
+			Log.i(TAG, "Device connected!");
+		} catch (Exception e) {
+			Log.e(TAG, e.getStackTrace() + e.getMessage());
 			e.printStackTrace();
 		}
 	}
+
+
 
 	/**
 	 * This just passes other to its appropriate equals
@@ -298,16 +323,31 @@ public class Device{
 		}
     }
 
+	private void onSerialDataReceived(String data) {
+		// Add whatever you want here
+		Log.i(TAG, "Serial data received: " + data);
+		if(data.startsWith("APIs")){
+			parseAPIs(data);
+		}else{
+			for (ArduinoAPI api : APIs.values()) {
+				if (api.receive(data))
+					break;//the callback was for the api
+			}
+		}
+	}
 
-   public void killConnection(){
-	   //this.serialPort.removeEventListener();
-	   //this.serialPort.close();
-   }
+	private void stopUsbConnection() {
+		try {
+			if (serialDevice != null) {
+				serialDevice.close();
+			}
 
-	/**
-	 * loops over the Map and kills all the devices using killConnection.
-	 */
-	public static void killAllDevs(){
-
-   }
+			if (connection != null) {
+				connection.close();
+			}
+		} finally {
+			serialDevice = null;
+			connection = null;
+		}
+	}
 }
