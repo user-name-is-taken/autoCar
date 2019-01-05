@@ -93,7 +93,6 @@ public class Device{
                     //call addAPIs here
 					if(dataUtf8.startsWith("APIs")) {
 						parseAPIs(dataUtf8);// remember, this is a different class
-						RaspberryPi.deviceAdded(Device.this);//remember, we're in an inner class
 					}else {
 						for (ArduinoAPI api : APIs.values()) {
 							if (api.receive(dataUtf8))
@@ -195,8 +194,9 @@ public class Device{
 		try{
 			Package pkg = this.getClass().getPackage();
 			Class cls = Class.forName(pkg.getName() + name);
-			return (ArduinoAPI) cls.getConstructor(String.class, Device.class)
+			ArduinoAPI api = (ArduinoAPI) cls.getConstructor(String.class, Device.class)
 					.newInstance(name, this);
+			return api;
 		}catch(Exception e){
 			Log.e(TAG, "getAPIfromName can't resolve name");
 			return null;
