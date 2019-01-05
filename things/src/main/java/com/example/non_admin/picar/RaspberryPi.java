@@ -7,5 +7,5 @@ package com.example.non_admin.picar;
  * Most of these methods will be static.
  */
 public class RaspberryPi {
-    
+
 }
