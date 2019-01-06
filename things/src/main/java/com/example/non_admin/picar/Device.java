@@ -3,6 +3,7 @@ package com.example.non_admin.picar;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbDeviceConnection;
@@ -64,9 +65,9 @@ public class Device {
 	private class myUSB_BroadcastReceiver extends android.content.BroadcastReceiver {
 		public int PID;
 		public int VID;
-		public myUSB_BroadcastReceiver(int VID, int PID){
-			this.PID = PID;
-			this.VID = VID;
+		public myUSB_BroadcastReceiver(){
+			this.PID = mDevice.getProductId();
+			this.VID = mDevice.getVendorId();
 		}
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
@@ -75,14 +76,13 @@ public class Device {
 				UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 				if (device != null && this.PID == device.getProductId()
 						&& this.VID == device.getVendorId()) {
-					//device.getVendorId() == USB_VENDOR_ID && device.getProductId() == USB_PRODUCT_ID
 					Log.i(TAG, "USB device detached");
 					stopUsbConnection();
 				}
 			}
 		}
 	}
-	
+
 
 	private class myCallback implements UsbSerialInterface.UsbReadCallback {
 		/**
@@ -119,13 +119,14 @@ public class Device {
 	 *
 	 * @param mDevice
 	 */
-	public Device(UsbDevice mDevice) {
+	public Device(UsbDevice mDevice, Context context) {
 		// add to devSet and devName in here
 		this.mDevice = mDevice;
 		this.APIs = new HashMap<String, ArduinoAPI>();
-		callback = new myCallback();
-		usbDetachedReceiver = new myUSB_BroadcastReceiver(mDevice.getVendorId(),
-				mDevice.getProductId());
+		this.callback = new myCallback();
+		this.usbDetachedReceiver = new myUSB_BroadcastReceiver();
+		IntentFilter filter = new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED);
+		context.registerReceiver(usbDetachedReceiver, filter);
 		try {
 			this.connect();
 			devSet.add(this);

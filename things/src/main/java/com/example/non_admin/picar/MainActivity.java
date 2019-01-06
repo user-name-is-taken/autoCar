@@ -40,8 +40,9 @@ public class MainActivity extends Activity {
         }else{
             if(!Device.devSet.contains(device)){
                 Device.setUsbManager((UsbManager) getSystemService(Context.USB_SERVICE), false);
-                Device myDev = new Device(device);
-
+                Device myDev = new Device(device, this);
+            }else{
+                Log.d(TAG, "Usb device already exists connected");
             }
         }
         //todo: add a disconnect
