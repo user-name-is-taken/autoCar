@@ -16,6 +16,7 @@ import com.felhr.usbserial.UsbSerialInterface;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -96,8 +97,9 @@ public class Device {
 		@Override
 		public void onReceivedData(byte[] data) {
 			try {
-				Log.d(TAG, "data received!");
+				Log.d(TAG, "data received! " + Arrays.toString(data));
 				String dataUtf8 = new String(data, "UTF-8");
+				//Log.d(TAG, "data received! " + dataUtf8);
 				buffer += dataUtf8;
 				int index;
 				while ((index = buffer.indexOf('\n')) != -1) {
