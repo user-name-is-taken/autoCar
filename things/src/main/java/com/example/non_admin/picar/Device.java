@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 import static android.support.v4.content.ContextCompat.getSystemService;
 //import UsbSerial;
@@ -56,13 +57,20 @@ public class Device {
 	private UsbSerialDevice serialDevice;
 	private String buffer = ""; // delete this?
 
+    private LinkedList<String> sendMsgBuffer = new LinkedList<>();
+
+    private boolean canSend = false;
+
 	//These store the devices
-
-
-	private UsbSerialInterface.UsbReadCallback callback;
 
 	private final BroadcastReceiver usbDetachedReceiver;
 
+	/**
+	 * This class listens for events when a USB devices that this class can handle
+	 * are detached. When they are detached, it stops the connection to the device.
+	 *
+	 * works
+	 */
 	private class myUSB_BroadcastReceiver extends android.content.BroadcastReceiver {
 		public int PID;
 		public int VID;
@@ -84,7 +92,11 @@ public class Device {
 		}
 	}
 
+	private UsbSerialInterface.UsbReadCallback callback;
 
+	/**
+	 * This is called when the connected USB device sends data to the pi.
+	 */
 	private class myCallback implements UsbSerialInterface.UsbReadCallback {
 		/**
 		 * This message is called when a device sends a message to the pi
@@ -97,7 +109,7 @@ public class Device {
 		@Override
 		public void onReceivedData(byte[] data) {
 			try {
-				Log.d(TAG, "data received! " + Arrays.toString(data));
+				Log.v(TAG, "data received! " + Arrays.toString(data));
 				String dataUtf8 = new String(data, "UTF-8");
 				//Log.d(TAG, "data received! " + dataUtf8);
 				buffer += dataUtf8;
@@ -112,17 +124,41 @@ public class Device {
 				Log.e(TAG, "Error receiving USB data", e);
 			}
 		}
+		void onSerialDataReceived(String data) {
+			// Add whatever you want here
+			Log.i(TAG, "Serial data received: " + data);
+			if(data.equalsIgnoreCase("start")){
+				send("APIs");
+			}
+			if(data.startsWith("APIs")) {
+				Log.i(TAG, "running parseAPIs");
+				parseAPIs(data);
+			}else if(data.equalsIgnoreCase("ready")){
+			    Log.i(TAG, "Received 'ready' so I'm ready to send");
+				canSend = true;
+				send();
+			}else{
+				for (ArduinoAPI api : APIs.values()) {
+					if (api.receive(data))
+						break;//the callback was for the api
+				}
+			}
+		}
 	}
 
 
-
-	/**
-	 * constructor
-	 *
-	 * @param mDevice
-	 */
+    /**
+     * Creates the Device:
+	 *   - registers a boadcastReceiver for detecting detached USB devices
+	 *   - registers a callback for when data is received for this device
+	 *   - actually connects to the device (sets up buad rate, parity bits...)
+     *
+     * @param context needed to register the disconnect broadcast receiver.
+     *                Also sets up the UsbManager if it's not set already.
+     */
 	public Device(UsbDevice mDevice, Context context) {
 		// add to devSet and devName in here
+        setUsbManager((UsbManager) context.getSystemService(context.USB_SERVICE), false);
 		this.mDevice = mDevice;
 		this.APIs = new HashMap<String, ArduinoAPI>();
 		this.callback = new myCallback();
@@ -200,10 +236,9 @@ public class Device {
 	/**
 	 * This adds an API the connected arduino can use. For example the motor API can control motors
 	 * @param name A unique identifier for the API name.
-	 * @param api The actual api. Note,  You COULD have API objects of the same type. For example if you have two motor controllers connected,
+	 * @param api The actual api. Note,  You COULD have API objects of the same type? For example if you have two motor controllers connected,
 	 * You'd need an API for each because APIs also store state information.
 	 *
-	 *  TODO: delete this?
 	 */
 	public void addAPI(String name, ArduinoAPI api){
 		APIs.put(name, api);//maybe check if name is already in APIs?
@@ -220,11 +255,13 @@ public class Device {
 	 */
 	private ArduinoAPI getAPIfromName(String name){
 		try{
-			Log.i(TAG, "'APIs' response: " + name);
+			Log.d(TAG, "'APIs' response: " + name + " length of that string is " + name.length());
 			Package pkg = this.getClass().getPackage();
-			Class cls = Class.forName(pkg.getName() + name);
-			ArduinoAPI api = (ArduinoAPI) cls.getConstructor(String.class, Device.class)
-					.newInstance(name, this);
+			String clsName = pkg.getName() + "." + name;
+			Log.d(TAG, "printing full class name: " + clsName + "!");
+			Class cls = Class.forName(clsName);
+			ArduinoAPI api = (ArduinoAPI) cls.getConstructor(Device.class)
+					.newInstance(this);
 			return api;
 		}catch(Exception e){
 			Log.e(TAG, "getAPIfromName can't resolve name");
@@ -242,19 +279,61 @@ public class Device {
 		Log.d(TAG, "parseAPIs response: " + message);
 		String[] apis = message.split("_");
 		this.setName(apis[1]);//the name. remember, it starts with "APIs"
-		for(int i=1; i < apis.length; i++){
+		for(int i=2; i < apis.length; i++){
 			ArduinoAPI curAPI = getAPIfromName(apis[i]);
-			if(curAPI != null)
+			Log.i(TAG, "API creation attempt");
+			if(curAPI != null) {
+				Log.i(TAG, "API created successfully");
 				this.APIs.put(apis[i], curAPI);
+			}
 		}
 	}
 
 	/**
-	 * This sends data to the device
+	 * This sends data to the device using UTF-8.
+	 * If the connection is already in use it adds the message to a buffer, then
+	 * sends it with send() when the device responds 'ready'
+	 *
 	 * @param message the data to be sent
+	 * @see <a href="https://beginnersbook.com/2013/12/java-string-getbytes-method-example/">
+	 *     References for message.getBytes('UTF-8')</a>
+	 * @see <a href="https://forum.arduino.cc/index.php?topic=172814.0">
+	 *     Forms discussing the arduino's char set, UTF-8</a>
+	 * @see this.send()
+	 * @see this.canSend
 	 */
-	protected void send(String message){
-	    this.serialDevice.write(message.getBytes());
+	public void send(String message){
+		if(canSend == true){
+			try{
+				if(this.serialDevice == null){
+					Log.e(TAG, "serialDevice is null???");
+				}
+				Log.i(TAG, "Sending: " + message);
+				this.serialDevice.write(message.getBytes("UTF-8"));
+				canSend = false;
+			}catch(UnsupportedEncodingException e){
+				Log.e(TAG, e.getStackTrace() + "Device.send uses the method String.getBytes('UTF-8')" +
+						". For some reason UTF-8 isn't supported for your message, " +
+						message + ".");
+			}
+		}else{
+			sendMsgBuffer.add(message);
+		}
+	}
+
+	/**
+	 * Sends the last method on this.sendMsgBuffer in FIFO fasion
+	 *
+	 * @see this.sendMsgBuffer.pop()
+	 * @see this.send(String)
+	 * @see this.canSend
+	 */
+	protected void send(){
+		if(this.canSend){
+			if(this.sendMsgBuffer.size() > 0){
+				send(this.sendMsgBuffer.pop());
+			}
+		}
 	}
 	
 	/**
@@ -330,19 +409,10 @@ public class Device {
 		}
     }
 
-	private void onSerialDataReceived(String data) {
-		// Add whatever you want here
-		Log.i(TAG, "Serial data received: " + data);
-		if(data.startsWith("APIs")){
-			parseAPIs(data);
-		}else{
-			for (ArduinoAPI api : APIs.values()) {
-				if (api.receive(data))
-					break;//the callback was for the api
-			}
-		}
-	}
 
+	/**
+	 * Stops the USB connection when a device is detached.
+	 */
 	private void stopUsbConnection() {
 		try {
 			if (serialDevice != null) {
