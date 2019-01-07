@@ -14,29 +14,50 @@ public class MSv2 extends ArduinoAPI {
 
     private MSv2Steppers[][] stepperGroups;//see executeGroup for why this is here.
 
+    /**
+     * Constructor for this class. used in Device's getAPIfromName(String)
+     *
+     * @param dev this device is forwarded to the super constructor. It is used for sending,
+     *            receiving...
+     * @see this.dev.getAPIfromName(String)
+     * @see ArduinoAPI(Device)
+     */
     public MSv2 (Device dev){
         super(dev);
         allShields = new Shield[32];
         stepperGroups = new MSv2Steppers[16][10];
+        this.startupRoutine();
     }
+
 
     @Override
     boolean receive(String message) {
         //log the output.
         //Log errors in an array?
+        if(message.startsWith("MSv2")){
+            Log.i(TAG, message + " was send from the arduino for the pi");
+            return true;
+        }
         return false;
     }
 
-    @Override
+    /**
+     * This doesn't work. Need to make send add to a buffer, then have arduinos
+     * send 'ready' when they're ready to get another message.
+     */
     void startupRoutine() {
+        Log.i(TAG, "Inside MSv2 startupRoutine");
         this.setShield(0);
         MSv2Motors motor1 = this.getShield(0).setDCMotor(1);
+        Log.i(TAG, "Inside MSv2 startupRoutine DCMotor DONE!");
         MSv2Steppers step2 = this.getShield(0).setStepperMotor(2);
+        Log.i(TAG, "Inside MSv2 startupRoutine setStepperMotor DONE!");
 
         motor1.setSpeed(100);
         step2.setMoveAmount(100, 0);
         motor1.setDirection(true);
         this.executeGroup(0);
+        Log.i(TAG, "Inside MSv2 startupRoutine DONE!");
     }
 
     /**
