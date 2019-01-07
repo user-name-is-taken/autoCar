@@ -220,6 +220,7 @@ public class Device {
 	 */
 	private ArduinoAPI getAPIfromName(String name){
 		try{
+			Log.i(TAG, "'APIs' response: " + name);
 			Package pkg = this.getClass().getPackage();
 			Class cls = Class.forName(pkg.getName() + name);
 			ArduinoAPI api = (ArduinoAPI) cls.getConstructor(String.class, Device.class)
@@ -238,6 +239,7 @@ public class Device {
 	 * @param message
 	 */
 	private void parseAPIs(String message){
+		Log.d(TAG, "parseAPIs response: " + message);
 		String[] apis = message.split("_");
 		this.setName(apis[1]);//the name. remember, it starts with "APIs"
 		for(int i=1; i < apis.length; i++){
@@ -285,10 +287,12 @@ public class Device {
 	 * connects to a physical device and sets up the SerialReader reader and SerialWriter writer 
 	 * member variables. These are 
 	 *
+	 * @See <a href="https://arduino.stackexchange.com/questions/261/serial-data-showing-up-weird">
+	 *     The arduino's Serial communication parameters.</a>
 	 */
 	protected void connect (){
 	    //connect(57600,SerialPort.DATABITS_8,SerialPort.STOPBITS_1,SerialPort.PARITY_NONE);
-		this.connect (115200, UsbSerialInterface.DATA_BITS_8,
+		this.connect (9600, UsbSerialInterface.DATA_BITS_8,
 				UsbSerialInterface.STOP_BITS_1, UsbSerialInterface.PARITY_NONE);
 	}
 	
