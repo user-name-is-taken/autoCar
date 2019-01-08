@@ -45,7 +45,6 @@ import static android.support.v4.content.ContextCompat.getSystemService;
  */
 public class Device {
 	private static UsbManager usbManager;
-	public static HashSet<Device> devSet = new HashSet<>();
 	public static HashMap<String, Device> devName = new HashMap<>();
 	private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -84,8 +83,9 @@ public class Device {
 			if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
 				UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 				if (device != null && this.PID == device.getProductId()
-						&& this.VID == device.getVendorId()) {
-					Log.i(TAG, "USB device detached");
+						&& this.VID == device.getVendorId() && mDevice.equals(device)) {
+					Log.i(TAG, "USB device detached. Has the same PID and VID as the " +
+							"device named " + name + ". So I'm stopping the connection to this device.");
 					stopUsbConnection();
 				}
 			}
@@ -127,9 +127,6 @@ public class Device {
 		void onSerialDataReceived(String data) {
 			// Add whatever you want here
 			Log.i(TAG, "Serial data received: " + data);
-			if(data.equalsIgnoreCase("start")){
-				send("APIs");
-			}
 			if(data.startsWith("APIs")) {
 				Log.i(TAG, "running parseAPIs");
 				parseAPIs(data);
@@ -160,20 +157,15 @@ public class Device {
 		// add to devSet and devName in here
         setUsbManager((UsbManager) context.getSystemService(context.USB_SERVICE), false);
 		this.mDevice = mDevice;
-		this.APIs = new HashMap<String, ArduinoAPI>();
 		this.callback = new myCallback();
 		this.usbDetachedReceiver = new myUSB_BroadcastReceiver();
 		IntentFilter filter = new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED);
 		context.registerReceiver(usbDetachedReceiver, filter);
 		try {
 			this.connect();
-			devSet.add(this);
 			this.serialDevice.read(callback);//adding a callback to the connection
 			this.send("APIs");
 			Log.i(TAG, "Device connected!");
-			if(devSet.contains(this)) {
-				Log.i(TAG, "This device is already contained");
-			}
 		} catch (Exception e) {
 			Log.e(TAG, e.getStackTrace() + e.getMessage());
 			e.printStackTrace();
@@ -182,60 +174,6 @@ public class Device {
 
 
 
-
-	/**
-	 * This just passes other to its appropriate equals
-	 * @param other
-	 * @return true or false
-	 */
-	@Override
-	public boolean equals(Object other){
-		Log.i(TAG, "General compairing");
-		if(other instanceof Device) {
-			Log.i(TAG, "Compairing Devices");
-			return this.equals((Device) other);
-		}else if (other instanceof UsbDevice) {
-			Log.i(TAG, "Compairing UsbDevices");
-			return this.equals((UsbDevice) other);
-		}else {
-			Log.i(TAG, "Compairing Objects!");
-			return super.equals(other);
-		}
-	}
-	/**
-	 * Makes the static data structures able to compare to UsbDevices. Note, you can't store
-	 * UsbDevices in the static data structures, but you can check if a Device with this UsbDevice
-	 * already exists in the static data structures.
-	 *
-	 * @param other the UsbDevice to compare to.
-	 * @return if this UsbDevice is the same device as other
-	 */
-	public boolean equals(UsbDevice other){
-		Log.i(TAG, "in the right UsbDevice.equals");
-		return this.mDevice.equals(other);
-	}
-	/**
-	 * Makes the static data structures able to compare to Devices.
-	 * Does this by comparing the Devices' UsbDevices'
-	 *
-	 * @param other
-	 * @return
-	 */
-	public boolean equals(Device other){
-		Log.i(TAG, "in the right Device.equals");
-		return this.mDevice.equals(other.getDevice());
-	}
-
-	/**
-	 * The hash code of the UsbDevice passed into this class.
-	 * This is necessary so the Device class's static data structures.
-	 * @return the hash code of this Device's UsbDevice
-	 */
-	@Override
-	public int hashCode() {
-		Log.i(TAG, "Calculating hashCode");
-		return this.mDevice.hashCode();
-	}
 
 	/**
 	 * gets the actual device
@@ -288,6 +226,8 @@ public class Device {
 	}
 
 	/**
+	 * This function is key. It checks for USB device uniqueness.
+	 *
 	 * Takes the _ delimited message starting with "APIs" then the API name and parses out the API
 	 * names then converts the strings to ArduinoAPI objects. These objects then add themselves
 	 * to the Device class's static data structures.
@@ -298,6 +238,7 @@ public class Device {
 		String[] apis = message.split("_");
 		this.setName(apis[1]);//the name. remember, it starts with "APIs"
 		if(!devName.containsKey(this.name)) {
+			this.APIs = new HashMap<String, ArduinoAPI>();
 			for (int i = 2; i < apis.length; i++) {
 				ArduinoAPI curAPI = getAPIfromName(apis[i]);
 				Log.i(TAG, "API creation attempt");
@@ -307,7 +248,14 @@ public class Device {
 				}
 			}
 			devName.put(name,this);
+		}else{
+			devName.get(this.name).updateUsbDevice(this.mDevice);
 		}
+	}
+
+	public void updateUsbDevice(UsbDevice device){
+		this.mDevice = device;
+		this.connect();
 	}
 
 	/**

@@ -42,22 +42,10 @@ public class MainActivity extends Activity {
         if(device == null){
             Log.e(TAG, "no usb connected");
         }else{
-            if(!Device.devSet.contains(device)){
-                //according to this https://stackoverflow.com/questions/14053764/how-to-identify-uniquely-a-usb-device
-                //You can't uniquely identify USB devices, except by name
-                Device myDev = new Device(device, this);
-                Log.i(TAG, "new usb device connected " + device.hashCode());
-                UsbManager man = (UsbManager) getSystemService(this.USB_SERVICE);
-                Log.i(TAG, "all devices " + Arrays.toString(man.getDeviceList().keySet().toArray()));
-            }else{
-                Log.i(TAG, "Usb device reconnected, before loop size of devSet: " + Device.devSet.size());
-                for(Device d:Device.devSet) {
-                    if(d.equals(device)) {
-                        Log.i(TAG, "Usb device named " +
-                                d.getName() + " was previously connected and was just reconnected");
-                    }
-                }
-            }
+            //according to this https://stackoverflow.com/questions/14053764/how-to-identify-uniquely-a-usb-device
+            //You can't uniquely identify USB devices, except by name
+            Device myDev = new Device(device, this);
+            Log.i(TAG, "usb device connected. See the constructor for more details");
         }
     }
 }
