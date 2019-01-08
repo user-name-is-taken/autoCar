@@ -12,12 +12,11 @@ public abstract class ArduinoAPI {
 	 * @param dev The Device that this API is connected to. This is the Device the API sends over.
 	 */
 	public ArduinoAPI(Device dev) {
-		// TODO Auto-generated constructor stub
 		super();
 		setAPIname();
 		dev.addAPI(this.getAPIname(), this);
 		this.dev = dev;
-		startupRoutine();
+		//startupRoutine();
 	}
 
 	public String getAPIname(){
@@ -41,8 +40,10 @@ public abstract class ArduinoAPI {
 	/**
 	 * Just a startup routine ArduinoAPIs must implement so you know they're working.
 	 * You could leave this blank, but that would be dumb
+	 *
+	 * I took this out because I can just make a startup routine in the API's constructor
 	 */
-	abstract void startupRoutine();
+	//abstract void startupRoutine();
 
 
 
