@@ -12,7 +12,6 @@ public abstract class ArduinoAPI {
 	 * @param dev The Device that this API is connected to. This is the Device the API sends over.
 	 */
 	public ArduinoAPI(Device dev) {
-		// TODO Auto-generated constructor stub
 		super();
 		setAPIname();
 		dev.addAPI(this.getAPIname(), this);

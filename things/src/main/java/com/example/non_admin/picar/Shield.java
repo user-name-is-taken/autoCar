@@ -2,6 +2,7 @@ package com.example.non_admin.picar;
 
 import android.util.Log;
 
+import java.lang.annotation.Target;
 import java.security.InvalidParameterException;
 
 import static android.content.ContentValues.TAG;
@@ -54,7 +55,7 @@ public class Shield {
         if(motorNumb < 0 || motorNumb > 3){
             IndexOutOfBoundsException e = new IndexOutOfBoundsException("Invalid motorNumb, " +
                     (motorNumb + 1) + ", passed to shield.setDCMotor on shield " + getI2Caddr());
-            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            Log.e(TAG, e.getMessage(), e);
             throw e;
         }else if(dcMotors[motorNumb] != null){
             Log.w(TAG, "Shield " + getI2Caddr() + " already has a motor at the index "
@@ -64,7 +65,7 @@ public class Shield {
             InvalidParameterException e = new InvalidParameterException("Shield " + getI2Caddr() +
                     " already has a stepper motor at position" + motorNumb/2 +
                     " preventing you from having a MSv2Motors at position" + motorNumb);
-            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            Log.e(TAG, e.getMessage(), e);
             throw e;
         }else{
             if(force) {
@@ -95,29 +96,32 @@ public class Shield {
      */
     public MSv2Steppers setStepperMotor(int stepNumb, boolean force){
         stepNumb --;
+        Log.i(TAG, "Inside setStepperMotor");
+        Log.i(TAG, "stepNumb = " + stepNumb);
         if(stepNumb < 0 || stepNumb > 1){
             IndexOutOfBoundsException e = new IndexOutOfBoundsException("Shield " + getI2Caddr()
                     + " has no stepper motor at the index " + stepNumb);
-            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            Log.e(TAG, e.getMessage(), e);
             throw e;
         }else if(this.stepperMotors[stepNumb] != null){
             Log.w(TAG, "Shield " + getI2Caddr() + " already has a stepper motor at the index "
                     + stepNumb);
             //not allowing a force reset here, because that should be a function of the MSv2Motors itself
-        }else if(!force && stepperMotors[(stepNumb)*2] != null &&
-                stepperMotors[((stepNumb)*2) + 1 ] != null){
+        }else if(!force && dcMotors[(stepNumb)*2] != null &&
+                dcMotors[((stepNumb)*2) + 1 ] != null){
             InvalidParameterException e = new InvalidParameterException("Shield " + getI2Caddr() +
                     "  has DC motor at position" + stepNumb * 2 + " or " + ((stepNumb * 2) + 1) +
                     " preventing you from having a stepper at position" + stepNumb);
-            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            Log.e(TAG, e.getMessage(), e);
             throw e;
         }else{
+            Log.i(TAG, "Inside setStepperMotor. Stepper motor setup should be successful.");
             if(force){
                 dcMotors[stepNumb * 2] = null;
                 dcMotors[(stepNumb * 2) + 1] = null;
             }
             stepperMotors[stepNumb] = new MSv2Steppers(this.dev, this, stepNumb);
-            //MSv2Motors(Device dev, int shieldIndex, int motorIndex)
+            // MSv2Steppers(Device dev, Shield shield, int stepperIndex
         }
         return stepperMotors[stepNumb];
     }
@@ -145,7 +149,7 @@ public class Shield {
             InvalidParameterException e = new InvalidParameterException(
                     "Invalid stepNumb, " + (1 + stepNumb) +
                             ", passed to shield.getStepperMotor on shield" + getI2Caddr());
-            Log.e(TAG, e.getStackTrace() + " " + e.getMessage(), e);
+            Log.e(TAG, e.getMessage(), e);
             throw e;
         }else if(stepperMotors[stepNumb] == null){
             Log.w(TAG, "There isn't a stepper motor at position " + (stepNumb + 1) +
@@ -154,7 +158,6 @@ public class Shield {
         return this.stepperMotors[stepNumb];
     }
 
-
-
+//TODO: write a way to remove a stepper motor from a group. (requires arduino code too)
 
 }

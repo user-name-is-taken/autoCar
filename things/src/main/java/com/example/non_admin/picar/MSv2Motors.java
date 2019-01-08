@@ -24,7 +24,7 @@ public class MSv2Motors {
 	private Boolean direction;
 	private final String directionMessageBase;
 	private final String speedMessageBase;
-	private final String motorNumb;
+	private final int motorNumb;
 	private final String shieldNumb;
 	private final String name;
 
@@ -33,7 +33,7 @@ public class MSv2Motors {
 		this.dev = dev;
 		this.speed = 0;
 		this.direction = false;
-		this.motorNumb = "" + motorIndex;
+		this.motorNumb = (motorIndex + 1);
 		this.shieldNumb = Integer.toHexString(shieldIndex + 96);
 		this.name = this.getClass().getSimpleName();
 		this.directionMessageBase = String.format("%s_%s_direction_%s_",
@@ -59,7 +59,6 @@ public class MSv2Motors {
 	 * @return
 	 */
 	protected boolean receive(String message) {
-		// TODO Auto-generated method stub
 		Log.d(TAG,message);
 		if(message.startsWith("MSv2Motors")){
 			/*
@@ -117,7 +116,8 @@ public class MSv2Motors {
                     " passed to setSpeed.");
         }else{
             this.speed = speed;
-            this.dev.send(this.speedMessageBase + Integer.toHexString(speed) );
+            this.dev.send(this.speedMessageBase +
+					"%2s".format(Integer.toHexString(speed)).replace(' ', '0') );//leftPad
         }
 	}
 

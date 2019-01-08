@@ -104,7 +104,7 @@ public class Device {
 		 * If an API gets a message and can process it, it will return true.
 		 *
 		 * @param data - the message received.
-		 *             TODO: get device name and APIs from the device
+		 *
 		 */
 		@Override
 		public void onReceivedData(byte[] data) {
@@ -171,11 +171,15 @@ public class Device {
 			this.serialDevice.read(callback);//adding a callback to the connection
 			this.send("APIs");
 			Log.i(TAG, "Device connected!");
+			if(devSet.contains(this)) {
+				Log.i(TAG, "This device is already contained");
+			}
 		} catch (Exception e) {
 			Log.e(TAG, e.getStackTrace() + e.getMessage());
 			e.printStackTrace();
 		}
 	}
+
 
 
 
@@ -186,12 +190,17 @@ public class Device {
 	 */
 	@Override
 	public boolean equals(Object other){
-		if(other instanceof Device)
+		Log.i(TAG, "General compairing");
+		if(other instanceof Device) {
+			Log.i(TAG, "Compairing Devices");
 			return this.equals((Device) other);
-		else if (other instanceof UsbDevice)
+		}else if (other instanceof UsbDevice) {
+			Log.i(TAG, "Compairing UsbDevices");
 			return this.equals((UsbDevice) other);
-		else
+		}else {
+			Log.i(TAG, "Compairing Objects!");
 			return super.equals(other);
+		}
 	}
 	/**
 	 * Makes the static data structures able to compare to UsbDevices. Note, you can't store
@@ -202,6 +211,7 @@ public class Device {
 	 * @return if this UsbDevice is the same device as other
 	 */
 	public boolean equals(UsbDevice other){
+		Log.i(TAG, "in the right UsbDevice.equals");
 		return this.mDevice.equals(other);
 	}
 	/**
@@ -212,8 +222,10 @@ public class Device {
 	 * @return
 	 */
 	public boolean equals(Device other){
+		Log.i(TAG, "in the right Device.equals");
 		return this.mDevice.equals(other.getDevice());
 	}
+
 	/**
 	 * The hash code of the UsbDevice passed into this class.
 	 * This is necessary so the Device class's static data structures.
@@ -221,6 +233,7 @@ public class Device {
 	 */
 	@Override
 	public int hashCode() {
+		Log.i(TAG, "Calculating hashCode");
 		return this.mDevice.hashCode();
 	}
 
@@ -254,7 +267,7 @@ public class Device {
 	 * 	Remember, when you create a ArduinoAPI it adds itself to Device's static data structures
 	 */
 	private ArduinoAPI getAPIfromName(String name){
-		try{
+		try {
 			Log.d(TAG, "'APIs' response: " + name + " length of that string is " + name.length());
 			Package pkg = this.getClass().getPackage();
 			String clsName = pkg.getName() + "." + name;
@@ -263,10 +276,15 @@ public class Device {
 			ArduinoAPI api = (ArduinoAPI) cls.getConstructor(Device.class)
 					.newInstance(this);
 			return api;
-		}catch(Exception e){
-			Log.e(TAG, "getAPIfromName can't resolve name");
+		}catch(NoSuchMethodException e){
+			Log.e(TAG, "Method not found.", e);
 			return null;
 		}
+		catch(Exception e){
+			Log.e(TAG, "unknown exception", e);
+			return null;
+		}
+
 	}
 
 	/**
@@ -279,13 +297,16 @@ public class Device {
 		Log.d(TAG, "parseAPIs response: " + message);
 		String[] apis = message.split("_");
 		this.setName(apis[1]);//the name. remember, it starts with "APIs"
-		for(int i=2; i < apis.length; i++){
-			ArduinoAPI curAPI = getAPIfromName(apis[i]);
-			Log.i(TAG, "API creation attempt");
-			if(curAPI != null) {
-				Log.i(TAG, "API created successfully");
-				this.APIs.put(apis[i], curAPI);
+		if(!devName.containsKey(this.name)) {
+			for (int i = 2; i < apis.length; i++) {
+				ArduinoAPI curAPI = getAPIfromName(apis[i]);
+				Log.i(TAG, "API creation attempt");
+				if (curAPI != null) {
+					Log.i(TAG, "API created successfully");
+					this.APIs.put(apis[i], curAPI);
+				}
 			}
+			devName.put(name,this);
 		}
 	}
 

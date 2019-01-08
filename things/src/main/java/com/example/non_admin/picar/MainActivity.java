@@ -7,6 +7,8 @@ import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.util.Log;
 
+import java.util.Arrays;
+
 /**
  * Skeleton of an Android Things activity.
  * <p>
@@ -35,15 +37,27 @@ public class MainActivity extends Activity {
         Log.d(TAG, "MainActivity started.");
         setContentView(R.layout.activity_main);
         UsbDevice device = (UsbDevice) getIntent().getParcelableExtra(UsbManager.EXTRA_DEVICE);
+        //todo figure out how these devices are uniquely identified. For example, if I disconnect
+        //and reconnect the same device, how do I know it's the same device.
         if(device == null){
             Log.e(TAG, "no usb connected");
         }else{
             if(!Device.devSet.contains(device)){
+                //according to this https://stackoverflow.com/questions/14053764/how-to-identify-uniquely-a-usb-device
+                //You can't uniquely identify USB devices, except by name
                 Device myDev = new Device(device, this);
+                Log.i(TAG, "new usb device connected " + device.hashCode());
+                UsbManager man = (UsbManager) getSystemService(this.USB_SERVICE);
+                Log.i(TAG, "all devices " + Arrays.toString(man.getDeviceList().keySet().toArray()));
             }else{
-                Log.d(TAG, "Usb device already exists connected");
+                Log.i(TAG, "Usb device reconnected, before loop size of devSet: " + Device.devSet.size());
+                for(Device d:Device.devSet) {
+                    if(d.equals(device)) {
+                        Log.i(TAG, "Usb device named " +
+                                d.getName() + " was previously connected and was just reconnected");
+                    }
+                }
             }
         }
-        //todo: add a disconnect
     }
 }
