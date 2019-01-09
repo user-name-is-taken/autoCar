@@ -30,6 +30,7 @@ import java.util.Arrays;
  */
 public class MainActivity extends Activity {
     private static String TAG = "MainAct";
+    private static BTRemote mBTRemote;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +47,9 @@ public class MainActivity extends Activity {
             //You can't uniquely identify USB devices, except by name
             Device myDev = new Device(device, this);
             Log.i(TAG, "usb device connected. See the constructor for more details");
+        }
+        if(mBTRemote == null){
+            mBTRemote = new BTRemote(this);
         }
     }
 }

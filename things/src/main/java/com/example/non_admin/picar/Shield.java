@@ -28,6 +28,8 @@ public class Shield {
         return Integer.toHexString(this.index + 96);
     }
 
+    /*
+    //commented this out because setDCMotor does the same thing.
     public MSv2Motors getDCMotor(int motorNumb){
         motorNumb --; // decrementing motorNumb for indexing.
         if(motorNumb < 0 || motorNumb > 3 || dcMotors[motorNumb] == null) {
@@ -42,7 +44,7 @@ public class Shield {
         }
         return this.dcMotors[motorNumb];
     }
-
+*/
     /**
      *
      * @param motorNumb

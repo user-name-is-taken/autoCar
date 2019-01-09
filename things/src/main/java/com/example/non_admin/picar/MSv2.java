@@ -66,6 +66,8 @@ public class MSv2 extends ArduinoAPI {
      * This sets up a shield at the specified index
      * These indexes correspond to the I2C addresses.
      *
+     * todo: handle error messages from the Arduino telling you that this shield isn't connected.
+     *
      * @param shieldIndex this is the shield index (0-31), not the I2C address
      */
     public void setShield(int shieldIndex){
@@ -82,7 +84,7 @@ public class MSv2 extends ArduinoAPI {
      * Gets a shield at this index.
      *
      * @param shieldIndex the index in allShields to get a Shield from
-     * @return the Shield at this given index
+     * @return the Shield at this given index. null if it doesn't exist yet.
      */
     public Shield getShield(int shieldIndex){
         return this.allShields[shieldIndex];
@@ -116,7 +118,7 @@ public class MSv2 extends ArduinoAPI {
      * @param stepper the stepper motor to look for
      * @param group the group to check in
      * @return true if it's in the group
-     * @see MSv2Steppers.equals(MSv2Steppers)
+     * @see MSv2Steppers#equals(MSv2Steppers)
      */
     public boolean stepperInGroup(MSv2Steppers stepper, int group){
         for(int i = 0; i < 10 && stepperGroups[group][i] != null; i++){
