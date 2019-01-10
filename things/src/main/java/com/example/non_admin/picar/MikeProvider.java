@@ -7,7 +7,7 @@ package com.example.non_admin.picar;
  * runs a related thread in the background.
  *
  */
-public abstract class MikeProvider{
+public class MikeProvider{
     MikeExecutor mExecutor;
 
     protected MikeProvider(MikeExecutor mExecutor){
