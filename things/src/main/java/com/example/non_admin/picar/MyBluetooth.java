@@ -16,7 +16,6 @@ import static android.content.ContentValues.TAG;
  */
 public class MyBluetooth extends MikeProvider{
     private static Context context;
-    private static BluetoothConfigManager manager;
     private static BluetoothAdapter mBluetoothAdapter;
 
 
@@ -40,7 +39,7 @@ public class MyBluetooth extends MikeProvider{
      * @see MyBluetooth(Context, MikeExecutor, byte[])
      */
     public MyBluetooth(Context context, MikeExecutor mExecutor){
-        this(context, mExecutor, toyRobot);
+        super(mExecutor);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if(mBluetoothAdapter == null){
             Log.i(TAG, "Device can't use bluetooth");
@@ -53,31 +52,10 @@ public class MyBluetooth extends MikeProvider{
         }else{
             Log.i(TAG, "Bluetooth was already enabled");
         }
+
     }
 
-    /**
-     *
-     *
-     * @param context the context of the app, (might not be necesary?)
-     * @param mExecutor the executor that this MikeProvider sends Bluetooth data to.
-     * @param CoD see toyRobot
-     * @see MikeExecutor
-     * @see MikeProvider#provide(String)
-     * @see <a href="https://developer.android.com/things/sdk/apis/bluetooth#device-pairing">
-     *     this android things bluetooth demo</a>
-     *
-     * todo: possibly add a param for [manager.setIoCapability](https://developer.android.com/reference/com/google/android/things/bluetooth/BluetoothConfigManager#setIoCapability(int))
-     */
-    public MyBluetooth(Context context, MikeExecutor mExecutor, byte[] CoD){
-        super(mExecutor);
-        //********* Configureing device attributes****************
-        this.context = context;
-        manager = BluetoothConfigManager.getInstance();
-        // Report the local Bluetooth device class as a speaker
-        BluetoothClass deviceClass = BluetoothClassFactory.build(CoD);
-        manager.setBluetoothClass(deviceClass);
-        manager.setIoCapability(BluetoothConfigManager.IO_CAPABILITY_UNKNOWN);//the default
-    }
+
 
     //note, you must be paired before you can establish an RFCOMM connection
 
