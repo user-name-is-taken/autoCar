@@ -60,6 +60,8 @@ public class Device {
 
     private boolean canSend = false;
 
+    private Context context;
+
 	//These store the devices
 
 	private final BroadcastReceiver usbDetachedReceiver;
@@ -156,6 +158,7 @@ public class Device {
 	public Device(UsbDevice mDevice, Context context) {
 		// add to devSet and devName in here
         setUsbManager((UsbManager) context.getSystemService(context.USB_SERVICE), false);
+        this.context = context;
 		this.mDevice = mDevice;
 		this.callback = new myCallback();
 		this.usbDetachedReceiver = new myUSB_BroadcastReceiver();
@@ -382,7 +385,7 @@ public class Device {
 	/**
 	 * Stops the USB connection when a device is detached.
 	 */
-	private void stopUsbConnection() {
+	public void stopUsbConnection() {
 		try {
 			if (serialDevice != null) {
 				serialDevice.close();
@@ -395,5 +398,9 @@ public class Device {
 			serialDevice = null;
 			connection = null;
 		}
+	}
+
+	public void unregisterDetachListener(){
+		context.unregisterReceiver(this.usbDetachedReceiver);
 	}
 }

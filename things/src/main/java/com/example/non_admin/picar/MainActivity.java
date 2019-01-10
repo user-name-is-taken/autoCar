@@ -1,8 +1,12 @@
 package com.example.non_admin.picar;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
+import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
@@ -35,6 +39,8 @@ public class MainActivity extends Activity implements TextToSpeech.OnInitListene
     private static BTRemote mBTRemote;
     public static CustomTTS ttsEngine;
     private static final int TTS_DATA_CHECKING = 0;
+    private BluetoothAdapter mBluetoothAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +60,9 @@ public class MainActivity extends Activity implements TextToSpeech.OnInitListene
         }
         if(mBTRemote == null){
             //mBTRemote = new BTRemote(this);
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            enableDisableBT();
+
         }
 
         if(ttsEngine == null) {
@@ -66,6 +75,45 @@ public class MainActivity extends Activity implements TextToSpeech.OnInitListene
         }
 
     }
+
+    public void enableDisableBT(){
+        if(mBluetoothAdapter == null){
+            Log.d(TAG, "device can't use bluetooth");
+        }else if(!mBluetoothAdapter.isEnabled()){
+            Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivity(enableBTIntent);
+            IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED);
+            registerReceiver(btStateBroadcastReceiver, BTIntent);
+        }else{
+            mBluetoothAdapter.disable();
+            IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+            registerReceiver(btStateBroadcastReceiver, BTIntent);
+        }
+    }
+
+    // Create a BroadcastReceiver for ACTION_FOUND.
+    private final BroadcastReceiver btStateBroadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(mBluetoothAdapter.ACTION_STATE_CHANGED)) {
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, mBluetoothAdapter.ERROR);
+                switch (state){
+                    case BluetoothAdapter.STATE_OFF:
+                        Log.d(TAG, "onReceive: STATE OFF");
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_OFF:
+                        Log.d(TAG, "STATE TURNING OFF");
+                        break;
+                    case BluetoothAdapter.STATE_ON:
+                        Log.d(TAG, "STATE ON");
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_ON:
+                        Log.d(TAG, "STATE TURNING ON");
+                        break;
+                }
+            }
+        }
+    };
 
     /**
      *
@@ -142,5 +190,10 @@ public class MainActivity extends Activity implements TextToSpeech.OnInitListene
         //todo: maybe disconnect devices? maybe disable bluetooth? unregister usb detach receivers?
         Log.i(TAG, "MainActivity destroyed.");
         super.onDestroy();
+        unregisterReceiver(btStateBroadcastReceiver);
+        for(Device dev : Device.devName.values()){
+            dev.stopUsbConnection();
+            dev.unregisterDetachListener();
+        }
     }
 }
