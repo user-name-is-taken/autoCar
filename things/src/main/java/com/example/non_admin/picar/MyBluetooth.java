@@ -1,10 +1,15 @@
 package com.example.non_admin.picar;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.bluetooth.BluetoothClass;
+import android.util.Log;
+
 import com.google.android.things.bluetooth.BluetoothClassFactory;
 import com.google.android.things.bluetooth.BluetoothConfigManager;
+
+import static android.content.ContentValues.TAG;
 
 /**
  *
@@ -12,6 +17,7 @@ import com.google.android.things.bluetooth.BluetoothConfigManager;
 public class MyBluetooth extends MikeProvider{
     private static Context context;
     private static BluetoothConfigManager manager;
+    private static BluetoothAdapter mBluetoothAdapter;
 
 
     /*
@@ -35,6 +41,18 @@ public class MyBluetooth extends MikeProvider{
      */
     public MyBluetooth(Context context, MikeExecutor mExecutor){
         this(context, mExecutor, toyRobot);
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if(mBluetoothAdapter == null){
+            Log.i(TAG, "Device can't use bluetooth");
+        }else if(!mBluetoothAdapter.isEnabled()){
+            mBluetoothAdapter.enable();//in video 1, 3:00, they use an intent to ask permission.
+            //I can't ask for permission because I'm on things.
+            Log.i(TAG, "Bluetooth switched to enabled");
+            //an intent/broadcast callback still might be necessary if enable
+            //is done asyncronously.
+        }else{
+            Log.i(TAG, "Bluetooth was already enabled");
+        }
     }
 
     /**

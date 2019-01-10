@@ -52,4 +52,11 @@ public class MainActivity extends Activity {
             mBTRemote = new BTRemote(this);
         }
     }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        //todo: maybe disconnect devices? maybe disable bluetooth? unregister usb detach receivers?
+        Log.i(TAG, "MainActivity destroyed.");
+    }
 }
