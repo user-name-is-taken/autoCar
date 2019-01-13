@@ -13,6 +13,9 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
+import com.google.android.things.pio.PeripheralManager;
+
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -34,12 +37,13 @@ import java.util.Locale;
  *
  * @see <a href="https://github.com/androidthings/contrib-drivers#readme">https://github.com/androidthings/contrib-drivers#readme</a>
  */
-public class MainActivity extends Activity implements TextToSpeech.OnInitListener {
+public class MainActivity extends Activity {
     private static String TAG = "MainAct";
     private static BTRemote mBTRemote;
     public static CustomTTS ttsEngine;
     private static final int TTS_DATA_CHECKING = 0;
-    private MyBluetooth myBluetooth;
+    public static MyBluetooth myBluetooth;
+    private static CustomGPIO mGpio;
 
 
     @Override
@@ -59,12 +63,12 @@ public class MainActivity extends Activity implements TextToSpeech.OnInitListene
             Log.i(TAG, "usb device connected. See the constructor for more details");
         }
 
-        if(mBTRemote == null){
-            mBTRemote = new BTRemote(this);
-        }
-        if(myBluetooth == null){
-            //mBTRemote = new BTRemote(this);
-            myBluetooth = new MyBluetooth(this, mBTRemote);
+        PeripheralManager manager = PeripheralManager.getInstance();
+        List<String> portList = manager.getGpioList();
+        if (portList.isEmpty()) {
+            Log.i(TAG, "No GPIO port available on this device.");
+        } else {
+            Log.i(TAG, "List of available ports: " + portList);
         }
 
         if(ttsEngine == null) {
@@ -76,9 +80,22 @@ public class MainActivity extends Activity implements TextToSpeech.OnInitListene
             startActivityForResult(checkData, TTS_DATA_CHECKING);
         }
 
+        if(mBTRemote == null){
+            mBTRemote = new BTRemote(this);
+            //todo: once bluetooth is working, tell the user to hit the GPIO button to
+            //make it discoverable with ttsEngine.
+        }
+        if(myBluetooth == null){
+            //mBTRemote = new BTRemote(this);
+            myBluetooth = new MyBluetooth(this, mBTRemote);
+        }
+
+        if(mGpio == null) {
+            mGpio = new CustomGPIO();
+        }
     }
     /**
-     * For now this just handles TTS
+     * When CustomTTS is created, this handles the result
      *
      * @param requestCode
      * @param resultCode
@@ -96,7 +113,7 @@ public class MainActivity extends Activity implements TextToSpeech.OnInitListene
                 if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
                     //installed - go ahead and instantiate
                     Log.v(TAG, "TTS is installed...");
-                    ttsEngine = new CustomTTS(this, this);
+                    ttsEngine = new CustomTTS( this);
                 }
                 else {
                     //no data, prompt to install it
@@ -114,41 +131,25 @@ public class MainActivity extends Activity implements TextToSpeech.OnInitListene
         }
     }
 
-    /**
-     * This method is Overriden from the TextToSpeech.OnInitListener interface.
-     * It is called when the ttsEngine is initialized.
-     * @param status
-     */
-    @Override
-    public void onInit(int status) {
-        if (status == TextToSpeech.SUCCESS) {
-            //Locale.ENGLISH
-            Locale myLoc = new Locale("en", "US");
-            //Locale myLoc = Locale.US;
-            Locale.setDefault(myLoc);
-            //I'm having an error where the local isn't set.
-            // this sets the local: https://proandroiddev.com/change-language-programmatically-at-runtime-on-android-5e6bc15c758
-            //I don't think this is why the speech isn't working.
-            ttsEngine.setLanguage(myLoc);
-            ttsEngine.setPitch(1f);
-            ttsEngine.setSpeechRate(1f);
-            Log.i(TAG, "Created text to speech engine");
-            ttsEngine.speak("Hello world");
-        } else {
-            Log.w(TAG, "Could not open TTS Engine (onInit status=" + status + ")");
-            ttsEngine = null;
-        }
-    }
 
     @Override
     public void onStop(){
         ttsEngine.stop();
         super.onStop();
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
     @Override
     protected void onDestroy(){
         if(ttsEngine != null) {
             ttsEngine.shutdown();
+        }
+        if(mGpio != null){
+            mGpio.kill();
         }
         //todo: maybe disconnect devices? maybe disable bluetooth? unregister usb detach receivers?
         Log.i(TAG, "MainActivity destroyed.");
