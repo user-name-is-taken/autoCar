@@ -107,7 +107,7 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
      */
     @Override
     public void onError(String utteranceId) {
-        Log.i(TAG, "Text to speech engine error");
+        Log.e(TAG, "Text to speech engine error");
     }
 
     /**
@@ -119,7 +119,7 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
     @Override
     public void onAudioAvailable(String utteranceId, byte[] audio){
         super.onAudioAvailable(utteranceId, audio);
-        Log.i(TAG, "Text to speech engine audio available");
+        Log.d(TAG, "Text to speech engine audio available");
     }
 
     /**
