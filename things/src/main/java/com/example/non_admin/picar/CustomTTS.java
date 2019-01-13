@@ -108,7 +108,8 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
     }
 
     /**
-     *
+     * According to this you need network connection.
+     * 
      * @param utteranceId
      * @see UtteranceProgressListener#onError(String, int)
      */
@@ -142,10 +143,17 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
             default:
                 Log.e(TAG, "Text to speech: unknown error");
         }
-        if(errorCode == TextToSpeech.ERROR_INVALID_REQUEST){
+    }
 
-        }else if()
-        Log.e(TAG, "Text to speech engine error");
+    /**
+     * according to the docs, this method is deprecated, but the compiler still requires it?
+     *
+     * https://developer.android.com/reference/android/speech/tts/UtteranceProgressListener.html#onError(java.lang.String)
+     * @param utteranceId
+     */
+    @Override
+    public void onError(String utteranceId) {
+        Log.e(TAG, "TextToSpeech: utterance error.");
     }
 
     /**
