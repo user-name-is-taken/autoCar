@@ -8,6 +8,7 @@ import com.google.android.things.pio.GpioCallback;
 import com.google.android.things.pio.PeripheralManager;
 
 import java.io.IOException;
+import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
@@ -81,4 +82,17 @@ public class CustomGPIO{
 
     }
 
+    /**
+     * A method that can list GPIO ports on a device. This can be helpful for debugging,
+     * if you want to use this class ofr other devices.
+     */
+    public static void listGPIOports() {
+        PeripheralManager manager = PeripheralManager.getInstance();
+        List<String> portList = manager.getGpioList();
+        if (portList.isEmpty()) {
+            Log.i(TAG, "No GPIO port available on this device.");
+        } else {
+            Log.i(TAG, "List of available ports: " + portList);
+        }
+    }
 }

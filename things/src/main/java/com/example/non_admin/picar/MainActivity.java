@@ -63,13 +63,6 @@ public class MainActivity extends Activity {
             Log.i(TAG, "usb device connected. See the constructor for more details");
         }
 
-        PeripheralManager manager = PeripheralManager.getInstance();
-        List<String> portList = manager.getGpioList();
-        if (portList.isEmpty()) {
-            Log.i(TAG, "No GPIO port available on this device.");
-        } else {
-            Log.i(TAG, "List of available ports: " + portList);
-        }
 
         if(ttsEngine == null) {
             //create an Intent
