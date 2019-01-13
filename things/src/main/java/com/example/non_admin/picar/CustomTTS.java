@@ -13,7 +13,15 @@ import static android.content.ContentValues.TAG;
 
 /**
  * This class adds a simpler speak method, and implements the TextToSpeech callbacks for its
- * tts member.
+ * tts member. Using this class should be as simple as initializing it, then calling its stop
+ * method in onStop and its shutdown method in onDestroy. Currently the callbacks just log information,
+ * but they can be made to do more...
+ *
+ * @see MainActivity#onStop()
+ * @see MainActivity#onDestroy()
+ * @see CustomTTS#stop()
+ * @see CustomTTS#shutdown()
+ * @see CustomTTS#speak(String)
  */
 
 public class CustomTTS extends UtteranceProgressListener implements TextToSpeech.OnInitListener {
@@ -23,7 +31,6 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
 
     private boolean available = false;
 
-    private Context context;
 
     private TextToSpeech tts;//all the callbacks are linked to this
 
@@ -32,15 +39,16 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
      * @param context
      */
     public CustomTTS(Context context){
-        //AudioManager man = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-
-        //man.setMode();
-        this.context = context;
         this.tts = new TextToSpeech(context, this);
         this.tts.setOnUtteranceProgressListener(this);
     }
 
 
+    /**
+     * Checks if onInit has been called yet, to check if speak can be used yet.
+     * @return
+     * @see this#onInit(int)
+     */
     public boolean isAvailable() {
         return available;
     }
@@ -65,8 +73,10 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
      * @param textToSpeak
      */
     public void speak(String textToSpeak){
-            this.tts.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
+        this.tts.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
     }
+
+//********************************CALLBACKS*************************************
 
 
     /**
