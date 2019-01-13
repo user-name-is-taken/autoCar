@@ -1,6 +1,8 @@
 package com.example.non_admin.picar;
 
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
@@ -21,12 +23,26 @@ public class CustomTTS extends TextToSpeech {
     public CustomTTS(Context context, TextToSpeech.OnInitListener listener){
         super(context, listener);
         setOnUtteranceProgressListener(new MyProgListener());
+        try {
+            //todo: https://developer.android.com/reference/android/media/AudioAttributes.Builder
+            AudioAttributes.Builder audioAttributes = new AudioAttributes.Builder().
+                    setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION_SIGNALLING).
+                    setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).
+                    setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED);
+            setAudioAttributes(audioAttributes.build());
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
     }
 
     public void speak(String textToSpeak){
             this.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
     }
+
+
 
 
     private class MyProgListener extends UtteranceProgressListener{
