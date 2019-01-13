@@ -91,7 +91,10 @@ public class MainActivity extends Activity {
         }
 
         if(mGpio == null) {
+            Log.i(TAG, "setting up GPIO");
             mGpio = new CustomGPIO();
+        }else{
+
         }
     }
     /**
@@ -135,11 +138,13 @@ public class MainActivity extends Activity {
     @Override
     public void onStop(){
         ttsEngine.stop();
+        mGpio.stop();
         super.onStop();
     }
 
     @Override
     protected void onStart() {
+        mGpio.start();
         super.onStart();
     }
 
@@ -149,6 +154,7 @@ public class MainActivity extends Activity {
             ttsEngine.shutdown();
         }
         if(mGpio != null){
+            Log.i(TAG, "killing gpio");
             mGpio.kill();
         }
         //todo: maybe disconnect devices? maybe disable bluetooth? unregister usb detach receivers?
