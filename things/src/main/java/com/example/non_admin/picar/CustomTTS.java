@@ -30,7 +30,7 @@ public class CustomTTS extends TextToSpeech {
                     setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).
                     setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED);
             setAudioAttributes(audioAttributes.build());
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
