@@ -47,6 +47,8 @@ public class MSv2 extends ArduinoAPI {
      */
     void startupRoutine() {
         Log.i(TAG, "Inside MSv2 startupRoutine");
+        MainActivity.ttsEngine.speak("You've connected motors. Press the GPIO button to " +
+                "make this device discoverable over bluetooth and control the motors with your phone.");
         this.setShield(0);
         MSv2Motors motor1 = this.getShield(0).setDCMotor(1);
         Log.i(TAG, "Inside MSv2 startupRoutine DCMotor DONE!");
