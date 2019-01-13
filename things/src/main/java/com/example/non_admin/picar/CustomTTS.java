@@ -2,15 +2,10 @@ package com.example.non_admin.picar;
 
 import android.content.Context;
 import android.media.AudioAttributes;
-import android.media.AudioDeviceInfo;
-import android.media.AudioManager;
-import android.media.AudioPlaybackConfiguration;
-import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 
-import java.util.Locale;
 
 import static android.content.ContentValues.TAG;
 
@@ -40,10 +35,6 @@ public class CustomTTS extends TextToSpeech {
                     setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED);
             setAudioAttributes(audioAttributes.build());
 
-            //the google assistant speaker is I2S
-            AudioDeviceInfo I2Sdev = findAudioDevice(AudioManager.GET_DEVICES_OUTPUTS, AudioDeviceInfo.TYPE_BUS);
-
-
             //AudioPlaybackConfiguration
 
         } catch (Exception e) {
@@ -53,30 +44,10 @@ public class CustomTTS extends TextToSpeech {
 
     }
 
-    /**
-     * Stolen from androidthings-googleassistant demo
-     * see here for using this https://github.com/androidthings/sample-googleassistant/blob/master/README.md#audio-configuration
-     * @param deviceFlag
-     * @param deviceType
-     * @return
-     */
-    private AudioDeviceInfo findAudioDevice(int deviceFlag, int deviceType) {
-        AudioManager manager = (AudioManager) this.context.getSystemService(Context.AUDIO_SERVICE);
-        //nager.set
-        AudioDeviceInfo[] adis = manager.getDevices(deviceFlag);
-        for (AudioDeviceInfo adi : adis) {
-            if (adi.getType() == deviceType) {
-               return adi;
-            }
-        }
-        return null;
-    }
 
     public void speak(String textToSpeak){
             this.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
     }
-
-
 
 
     private class MyProgListener extends UtteranceProgressListener{
