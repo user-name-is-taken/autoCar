@@ -73,7 +73,14 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
      * @param textToSpeak
      */
     public void speak(String textToSpeak){
-        this.tts.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
+        if(isAvailable()) {
+            this.tts.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
+        }else{
+
+            Log.e(TAG, "MainActivity.ttsEngine.speak(String) received text, but it's not done initializing yet.",
+                    new IllegalStateException("eager beaver!"));
+
+        }
     }
 
 //********************************CALLBACKS*************************************
@@ -106,7 +113,38 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
      * @see UtteranceProgressListener#onError(String, int)
      */
     @Override
-    public void onError(String utteranceId) {
+    public void onError(String utteranceId, int errorCode) {
+        switch(errorCode){
+            case TextToSpeech.ERROR_INVALID_REQUEST:
+                Log.e(TAG, "Text to speech: invalid request see https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#ERROR_INVALID_REQUEST");
+                break;
+            case TextToSpeech.ERROR_NETWORK_TIMEOUT:
+                Log.e(TAG, "Text to speech: network timeout see https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#ERROR_NETWORK_TIMEOUT");
+                break;
+            case TextToSpeech.ERROR_OUTPUT:
+                Log.e(TAG, "Text to speech: error output SEE https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#ERROR_OUTPUT");
+                break;
+            case TextToSpeech.ERROR_NOT_INSTALLED_YET:
+                Log.e(TAG, "Text to speech: not installed yet SEE https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#ERROR_NOT_INSTALLED_YET");
+                break;
+            case TextToSpeech.ERROR_SYNTHESIS:
+                Log.e(TAG, "Text to speech: synthesis error see https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#ERROR_SYNTHESIS");
+                break;
+            case TextToSpeech.ERROR_SERVICE:
+                Log.e(TAG, "Text to speech: service error see https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#ERROR_SERVICE");
+                break;
+            case TextToSpeech.ERROR:
+                Log.e(TAG, "Text to speech: general error see https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#ERROR");
+                break;
+            case TextToSpeech.ERROR_NETWORK:
+                Log.e(TAG, "Text to speech: network error see https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#ERROR_NETWORK");
+                break;
+            default:
+                Log.e(TAG, "Text to speech: unknown error");
+        }
+        if(errorCode == TextToSpeech.ERROR_INVALID_REQUEST){
+
+        }else if()
         Log.e(TAG, "Text to speech engine error");
     }
 
