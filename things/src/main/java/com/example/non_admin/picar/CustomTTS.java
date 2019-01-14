@@ -109,7 +109,7 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
 
     /**
      * According to this you need network connection.
-     * 
+     *
      * @param utteranceId
      * @see UtteranceProgressListener#onError(String, int)
      */
@@ -178,7 +178,6 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
             Log.i(TAG, "Created text to speech engine");
-            speak("Hello world");
 
             try {
                 AudioAttributes.Builder audioAttributes = new AudioAttributes.Builder().
@@ -201,7 +200,7 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
                 available = true;
 
                 //AudioPlaybackConfiguration
-
+                speak("Hello world");
             } catch (Exception e) {
                 Log.e(TAG, "Error creating CustomTTS", e);
             }

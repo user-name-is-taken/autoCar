@@ -22,7 +22,7 @@ public class CustomGPIO{
                 if (gpio.getValue()) {
                     //Pin is HIGH
                     Log.i(TAG, "pin is high");
-                    if(MainActivity.ttsEngine != null && MainActivity.ttsEngine.isAvailable()) {
+                    if(MainActivity.ttsEngine != null && MainActivity.ttsEngine.isAvailable() ){
                         MainActivity.ttsEngine.speak("pin is high");
                     }
                 } else {

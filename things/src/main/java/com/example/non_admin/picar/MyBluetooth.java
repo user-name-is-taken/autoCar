@@ -55,6 +55,9 @@ public class MyBluetooth extends MikeProvider{
                 switch (mode){
                     case BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE:
                         Log.d(TAG, "Discoverability enabled.");
+                        if(MainActivity.ttsEngine.isAvailable()){
+                            MainActivity.ttsEngine.speak("");
+                        }
                         break;
                     case BluetoothAdapter.SCAN_MODE_CONNECTABLE:
                         Log.d(TAG, "Discoverability Disabled. Able to receive connections");

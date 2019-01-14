@@ -37,6 +37,7 @@ public class BTRemote extends MikeExecutor {
         if(setupMotors()){
             Log.i(TAG, "Motors exist.");
         }
+        Log.i(TAG, "Data received in BTRemote from its provider: " + dataFromInput);
         return dataFromInput[0];
     }
 
