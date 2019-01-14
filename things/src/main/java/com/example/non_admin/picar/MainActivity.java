@@ -55,12 +55,12 @@ public class MainActivity extends Activity {
         //todo figure out how these devices are uniquely identified. For example, if I disconnect
         //and reconnect the same device, how do I know it's the same device.
         if(device == null){
-            Log.e(TAG, "no usb connected");
+            Log.d(TAG, "no usb connected");
         }else{
             //according to this https://stackoverflow.com/questions/14053764/how-to-identify-uniquely-a-usb-device
             //You can't uniquely identify USB devices, except by name
-            Device myDev = new Device(device, this);
-            Log.i(TAG, "usb device connected. See the constructor for more details");
+            new Device(device, this);// the constructor adds this to its own static HashMap
+            Log.d(TAG, "usb device connected. See the constructor for more details");
         }
 
 
@@ -73,21 +73,27 @@ public class MainActivity extends Activity {
             startActivityForResult(checkData, TTS_DATA_CHECKING);
         }
 
+        /*
+        if(myBluetooth == null){
+            //mBTRemote = new BTRemote(this);
+            Log.d(TAG, "setting up bluetooth");
+            myBluetooth = new MyBluetooth(this, mBTRemote);
+        }else{
+            Log.d(TAG, "Bluetooth already setup");
+        }
         if(mBTRemote == null){
+            Log.d(TAG, "Setting up the bluetooth remote");
             mBTRemote = new BTRemote(this);
             //todo: once bluetooth is working, tell the user to hit the GPIO button to
             //make it discoverable with ttsEngine.
         }
-        if(myBluetooth == null){
-            //mBTRemote = new BTRemote(this);
-            myBluetooth = new MyBluetooth(this, mBTRemote);
-        }
+        */
 
         if(mGpio == null) {
-            Log.i(TAG, "setting up GPIO");
+            Log.d(TAG, "setting up GPIO");
             mGpio = new CustomGPIO();
         }else{
-
+            Log.d(TAG, "GPIO already setup");
         }
     }
     /**

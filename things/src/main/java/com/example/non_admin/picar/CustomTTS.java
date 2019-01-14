@@ -2,11 +2,21 @@ package com.example.non_admin.picar;
 
 import android.content.Context;
 import android.media.AudioAttributes;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.os.Build;
+import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.util.Log;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Locale;
 
 import static android.content.ContentValues.TAG;
@@ -31,17 +41,120 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
 
     private boolean available = false;
 
+    private static final String TTS_ENGINE = "com.google.android.tts";
+    //see the log statement "Available Engines" for this
+    private static MediaPlayer mediaPlayer;
+
+    private LinkedList<String> textToSpeehQueue;
+    private static File myFile;
+
 
     private TextToSpeech tts;//all the callbacks are linked to this
+    private Context context;
+    private AudioAttributes audioAttributes;
 
+
+    private class PlaybackDone implements MediaPlayer.OnCompletionListener{
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+            syntheziseNextToFile();
+        }
+    }
+
+    private class Prepared implements MediaPlayer.OnPreparedListener{
+        @Override
+        public void onPrepared(MediaPlayer mp) {
+            mediaPlayer.start();
+        }
+    }
+
+    private MediaPlayer.OnCompletionListener playbackDone;
+
+    private MediaPlayer.OnPreparedListener preparedListener;
     /**
      * initializes the class so it can use text to speech
      * @param context
      */
     public CustomTTS(Context context){
-        this.tts = new TextToSpeech(context, this);
+        Log.i(TAG, "API level: " + Build.VERSION.SDK_INT);
+        this.context = context;
+        this.tts = new TextToSpeech(context, this, TTS_ENGINE);
         this.tts.setOnUtteranceProgressListener(this);
+        this.textToSpeehQueue = new LinkedList<>();
+        this.mediaPlayer = new MediaPlayer();
+        AudioAttributes.Builder audioAttributesBuilder = new AudioAttributes.Builder().
+                setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION_SIGNALLING).
+                setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).
+                setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED);
+
+        this.audioAttributes = audioAttributesBuilder.build();
+        this.playbackDone = new PlaybackDone();
+        this.preparedListener = new Prepared();
+
+        if(this.myFile == null){
+            try {
+                myFile = File.createTempFile("tempSoundFile", ".wav");
+                myFile.deleteOnExit();
+                myFile.canRead();
+                myFile.canWrite();
+            }catch (IOException e){
+                Log.e(TAG, "Error creating temp file", e);
+            }
+        }
+        try {
+            this.mediaPlayer.setDataSource(myFile.getPath());
+        }catch (IOException e){
+            Log.e(TAG, "Custom TTS illegal file access", e);
+        }
+        this.mediaPlayer.setOnCompletionListener(this.playbackDone);
+        this.mediaPlayer.setOnPreparedListener(this.preparedListener);
+        this.mediaPlayer.setAudioAttributes(this.audioAttributes);
+
     }
+
+    /**
+     * This is only useful on API level >= 28
+     * @param context
+     * @param info
+     */
+    public CustomTTS(Context context, AudioDeviceInfo info){
+        this(context);
+        if(Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.P) {
+            if(info == null) {
+                AudioDeviceInfo mAudioOutputDevice = findAudioOutputDevice( AudioDeviceInfo.TYPE_BUS );
+                //TYPE_BUS is for I2S
+                this.mediaPlayer.setPreferredDevice(mAudioOutputDevice);
+            }else{
+                this.mediaPlayer.setPreferredDevice(info);
+            }
+
+        }else{
+            Log.e(TAG, "API level is too low, using speak with the default setup");
+        }
+
+    }
+
+    /**
+     * Allows you to specify which audio output device you want to play from.
+     * This is only useful in API level >= 28
+     *
+     * @param deviceType
+     * @return the audio device
+     * @see https://developer.android.com/reference/android/media/AudioDeviceInfo
+     * @see https://github.com/androidthings/sample-googleassistant for parameters
+     */
+    private AudioDeviceInfo findAudioOutputDevice(int deviceType) {
+        Log.i(TAG, "Setting the audio output device to your liking. API level is: " + Build.VERSION.SDK_INT);
+        AudioManager manager = (AudioManager) this.context.getSystemService(Context.AUDIO_SERVICE);
+        AudioDeviceInfo[] adis = manager.getDevices(manager.GET_DEVICES_OUTPUTS);
+        for (AudioDeviceInfo adi : adis) {
+            if (adi.getType() == deviceType) {
+                return adi;
+            }
+        }
+        return null;
+    }
+
 
 
     /**
@@ -64,9 +177,22 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
      * @see MainActivity#onDestroy()
      */
     public void shutdown(){
+        Log.i(TAG, "shutting down the tts, clearing the queue, releasing the mediaPlayer");
         this.tts.shutdown();
+        this.mediaPlayer.release();
+        this.textToSpeehQueue.clear();
     }
 
+    private void syntheziseNextToFile(){
+        if(this.textToSpeehQueue.size() > 0) {
+            Bundle params = new Bundle();
+            //pre lolipop devices: https://stackoverflow.com/questions/34562771/how-to-save-audio-file-from-speech-synthesizer-in-android-android-speech-tts
+
+            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, UTTERANCE_ID);
+
+            this.tts.synthesizeToFile(textToSpeehQueue.pop(), params, myFile, UTTERANCE_ID);
+        }
+    }
 
     /**
      * This makes speaking much easier.
@@ -74,7 +200,18 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
      */
     public void speak(String textToSpeak){
         if(isAvailable()) {
-            this.tts.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
+
+                //this.tts.speak(textToSpeak, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID);
+            Log.d(TAG, "Add text to the speaking queue");
+
+            this.textToSpeehQueue.add(textToSpeak);
+            if(this.textToSpeehQueue.size() == 1){
+                Log.d(TAG, "The queue was empty, so I'm going straight to running this.");
+                syntheziseNextToFile();
+            }
+
+            //see the log statement "Engine features" for what parameters can be used in params
+            //Engine specific params must be prefaced by their name (see the docs)
         }else{
 
             Log.e(TAG, "MainActivity.ttsEngine.speak(String) received text, but it's not done initializing yet.",
@@ -104,7 +241,9 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
      */
     @Override
     public void onDone(String utteranceId) {
-        Log.i(TAG, "Text to speech engine done");
+        Log.i(TAG, "Text to speech engine done. Probably done synthesizing, and ready to prepare and play" +
+                " the media");
+        this.mediaPlayer.prepareAsync();
     }
 
     /**
@@ -180,11 +319,7 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
             Log.i(TAG, "Created text to speech engine");
 
             try {
-                AudioAttributes.Builder audioAttributes = new AudioAttributes.Builder().
-                        setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION_SIGNALLING).
-                        setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).
-                        setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED);
-                this.tts.setAudioAttributes(audioAttributes.build());
+                this.tts.setAudioAttributes(this.audioAttributes);
 
                 //Locale.ENGLISH
                 Locale myLoc = new Locale("en", "US");
@@ -196,7 +331,7 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
                 this.tts.setLanguage(myLoc);
                 this.tts.setPitch(1f);
                 this.tts.setSpeechRate(1f);
-
+                setOfflineVoice(Voice.QUALITY_NORMAL);
                 available = true;
 
                 //AudioPlaybackConfiguration
@@ -208,5 +343,33 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
             Log.w(TAG, "Could not open TTS Engine (onInit status=" + status + ")");
             //ttsEngine = null;
         }
+    }
+
+    /**
+     * sets the TTS voice to the voice that can be used offline that has the highest quality and
+     * whose quality is at least qualityMin
+     *
+     * @param qualityMin the minimum quality an offline voice can have.
+     */
+    private void setOfflineVoice(int qualityMin){
+
+        // find a voice that doesn't require a network connection.
+        Voice bestOfflineVoice = null;
+        for (Voice curV : this.tts.getVoices()){
+            if(!curV.isNetworkConnectionRequired()) {
+                if(bestOfflineVoice == null || curV.getQuality() > bestOfflineVoice.getQuality()){
+                    bestOfflineVoice = curV;
+                }
+                Log.d(TAG, "offline voice possibility: " + bestOfflineVoice.getName());
+
+            }
+        }
+        if(bestOfflineVoice != null && bestOfflineVoice.getQuality() >= qualityMin) {
+            //if the best o
+            //https://developer.android.com/reference/android/speech/tts/Voice.html#QUALITY_NORMAL
+            this.tts.setVoice(bestOfflineVoice);
+        }
+        Log.i(TAG, "Available Engines: " + Arrays.toString(this.tts.getEngines().toArray()));
+        Log.i(TAG, "Engine features: " + Arrays.toString(this.tts.getVoice().getFeatures().toArray()));
     }
 }

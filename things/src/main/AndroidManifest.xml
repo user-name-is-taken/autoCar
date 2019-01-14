@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.non_admin.picar">
 
-    <uses-sdk android:maxSdkVersion="12" />
+    <uses-sdk android:maxSdkVersion="28" />
 
     <uses-feature android:name="android.hardware.bluetooth"/>
     <uses-permission android:name="android.permission.BLUETOOTH" />
