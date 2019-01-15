@@ -73,7 +73,6 @@ public class MainActivity extends Activity {
             startActivityForResult(checkData, TTS_DATA_CHECKING);
         }
 
-        /*
         if(myBluetooth == null){
             //mBTRemote = new BTRemote(this);
             Log.d(TAG, "setting up bluetooth");
@@ -87,7 +86,6 @@ public class MainActivity extends Activity {
             //todo: once bluetooth is working, tell the user to hit the GPIO button to
             //make it discoverable with ttsEngine.
         }
-        */
 
         if(mGpio == null) {
             Log.d(TAG, "setting up GPIO");

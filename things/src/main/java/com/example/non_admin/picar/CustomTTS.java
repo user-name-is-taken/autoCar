@@ -5,6 +5,7 @@ import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -32,6 +33,18 @@ import static android.content.ContentValues.TAG;
  * @see CustomTTS#stop()
  * @see CustomTTS#shutdown()
  * @see CustomTTS#speak(String)
+ *
+ *
+ * todo: fix Illegal State
+ *
+ *
+ * maybe you could use audio track. According to SynthesizeToFile, it uses wav files
+ * https://developer.android.com/reference/android/speech/tts/TextToSpeech.html#synthesizeToFile(java.lang.CharSequence,%20android.os.Bundle,%20java.io.File,%20java.lang.String)
+ * and wav files might have the encoding parameters you need
+ * http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
+ *
+ * https://stackoverflow.com/questions/7372813/android-audiotrack-playing-wav-file-getting-only-white-noise
+ * ^code for playing a wav file with audio track...!
  */
 
 public class CustomTTS extends UtteranceProgressListener implements TextToSpeech.OnInitListener {
@@ -65,6 +78,7 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
         @Override
         public void onPrepared(MediaPlayer mp) {
             mediaPlayer.start();
+
         }
     }
 
@@ -81,7 +95,6 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
         this.tts = new TextToSpeech(context, this, TTS_ENGINE);
         this.tts.setOnUtteranceProgressListener(this);
         this.textToSpeehQueue = new LinkedList<>();
-        this.mediaPlayer = new MediaPlayer();
         AudioAttributes.Builder audioAttributesBuilder = new AudioAttributes.Builder().
                 setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION_SIGNALLING).
                 setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).
@@ -95,20 +108,13 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
             try {
                 myFile = File.createTempFile("tempSoundFile", ".wav");
                 myFile.deleteOnExit();
-                myFile.canRead();
-                myFile.canWrite();
+                myFile.setReadable(true, false);
+                myFile.setWritable(true, false);
+                Log.i(TAG, "My file path: " + myFile.getPath() + " can read? " + (myFile.canRead()? "yes":"no"));
             }catch (IOException e){
                 Log.e(TAG, "Error creating temp file", e);
             }
         }
-        try {
-            this.mediaPlayer.setDataSource(myFile.getPath());
-        }catch (IOException e){
-            Log.e(TAG, "Custom TTS illegal file access", e);
-        }
-        this.mediaPlayer.setOnCompletionListener(this.playbackDone);
-        this.mediaPlayer.setOnPreparedListener(this.preparedListener);
-        this.mediaPlayer.setAudioAttributes(this.audioAttributes);
 
     }
 
@@ -181,6 +187,7 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
         this.tts.shutdown();
         this.mediaPlayer.release();
         this.textToSpeehQueue.clear();
+        this.myFile.delete();// not sure if this is right...?
     }
 
     private void syntheziseNextToFile(){
@@ -243,6 +250,18 @@ public class CustomTTS extends UtteranceProgressListener implements TextToSpeech
     public void onDone(String utteranceId) {
         Log.i(TAG, "Text to speech engine done. Probably done synthesizing, and ready to prepare and play" +
                 " the media");
+        if(this.mediaPlayer == null) {
+            try {
+                this.mediaPlayer = new MediaPlayer();
+                Uri fileUri = Uri.fromFile(myFile);
+                this.mediaPlayer.setDataSource(context, fileUri);
+            } catch (IOException e) {
+                Log.e(TAG, "Custom TTS illegal file access", e);
+            }
+            this.mediaPlayer.setOnCompletionListener(this.playbackDone);
+            this.mediaPlayer.setOnPreparedListener(this.preparedListener);
+            this.mediaPlayer.setAudioAttributes(this.audioAttributes);
+        }
         this.mediaPlayer.prepareAsync();
     }
 
